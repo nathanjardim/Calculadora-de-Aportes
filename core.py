@@ -1,99 +1,104 @@
 import numpy as np
 
 def taxa_mensal(taxa_anual):
-    return (1 + taxa_anual) ** (1 / 12) - 1
+    return (1 + taxa_anual)**(1 / 12) - 1
 
 def calcular_meses_acc(idade_atual, idade_aposentadoria):
     return (idade_aposentadoria - idade_atual + 1) * 12
 
-def calcular_meses_cons(idade_aposentadoria, idade_morte):
-    return (idade_morte - idade_aposentadoria) * 12
+def calcular_meses_cons(idade_aposentadoria, idade_fim):
+    return (idade_fim - idade_aposentadoria) * 12
 
-def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
+def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto_renda):
     total_meses = meses_acc + meses_cons
-    cota_bruta = np.cumprod(np.full(total_meses + 1, 1 + taxa))
+    cota_bruta = [1]
+    for _ in range(total_meses):
+        cota_bruta.append(cota_bruta[-1] * (1 + taxa))
     if valor_inicial == 0:
-        cota_bruta = np.insert(cota_bruta, 0, 1)[:-1]
+        cota_bruta = cota_bruta[1:]
 
-    cotas_finais = cota_bruta[meses_acc + 1:]
-    cotas_iniciais = cota_bruta[:meses_acc + 1]
-    matriz_cotas_liq = cotas_finais - ((cotas_finais[None, :] - cotas_iniciais[:, None]) * imposto)
+    matriz_cotas_liq = []
+    for i in range(meses_acc + 1):
+        linha = []
+        for j in range(meses_cons):
+            cota_liq = cota_bruta[meses_acc + 1 + j] - (cota_bruta[meses_acc + 1 + j] - cota_bruta[i]) * imposto_renda
+            linha.append(cota_liq)
+        matriz_cotas_liq.append(linha)
     return cota_bruta, matriz_cotas_liq
 
-def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
-    n_aportes = meses_acc + 1
-    patrimonio = np.zeros(n_aportes)
-    aportes = np.full(n_aportes, valor_aporte)
-    if valor_inicial > 0:
-        patrimonio[0] = valor_inicial
-        aportes[0] = valor_inicial
+def calcular_aporte(aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
+    patrimonio = [valor_inicial]
+    aportes = [valor_inicial] + [aporte] * meses_acc
 
-    for i in range(1, n_aportes):
-        patrimonio[i] = patrimonio[i - 1] * (1 + taxa) + aportes[i]
+    for i in range(meses_acc):
+        patrimonio.append(patrimonio[-1] * (1 + taxa) + aporte)
 
-    qtd_cotas_total = patrimonio / cota_bruta[:n_aportes]
-    qtd_cotas_aportes = aportes / cota_bruta[:n_aportes]
+    if patrimonio[0] == 0:
+        patrimonio.pop(0)
 
-    nova_matriz = matriz_cotas_liq.T
-    patrimonio_mensal = list(patrimonio.copy())
-    cotas_vivas = qtd_cotas_aportes.copy()
+    qtd_cotas_total = [p / c if c != 0 else 0 for p, c in zip(patrimonio, cota_bruta[:len(patrimonio)])]
+    qtd_cotas_aportes = [a / c if c != 0 else 0 for a, c in zip(aportes, cota_bruta[:len(aportes)])]
 
-    for mes_resgate in range(nova_matriz.shape[0]):
-        linha_valores = nova_matriz[mes_resgate]
-        resgatado = 0
-        nova_cotas = cotas_vivas.copy()
+    nova_matriz = np.array(matriz_cotas_liq).T
+    valor_liquido = []
+    cotas_restantes = []
 
-        for i in range(len(cotas_vivas)):
-            if resgatado >= resgate_necessario:
-                break
-            valor_cota = linha_valores[i]
-            valor_disponivel = nova_cotas[i] * valor_cota
-            restante = resgate_necessario - resgatado
-
-            if valor_disponivel >= restante:
-                nova_cotas[i] -= restante / valor_cota
-                resgatado += restante
+    for col in range(nova_matriz.shape[0]):
+        linha_liquida = [qtd_cotas_aportes[i] * nova_matriz[col, i] for i in range(len(qtd_cotas_aportes))]
+        resgate = 0
+        for i in range(len(linha_liquida)):
+            if resgate >= resgate_necessario:
+                linha_liquida[i] = 0
+                continue
+            if linha_liquida[i] >= resgate_necessario - resgate:
+                qtd_cotas_aportes[i] -= (resgate_necessario - resgate) / matriz_cotas_liq[i][col]
+                linha_liquida[i] = resgate_necessario - resgate
+                resgate = resgate_necessario
             else:
-                resgatado += valor_disponivel
-                nova_cotas[i] = 0
+                resgate += linha_liquida[i]
+                qtd_cotas_aportes[i] = 0
 
-        cotas_vivas = nova_cotas
-        patrimonio_mensal.append(np.dot(cotas_vivas, cota_bruta[mes_resgate + n_aportes]))
+        cotas_restantes.append(sum(qtd_cotas_aportes))
+        valor_liquido.append(sum([
+            qtd_cotas_aportes[i] * nova_matriz[col, i] for i in range(len(qtd_cotas_aportes))
+        ]))
 
-    patrimonio_mensal = [float(v) if isinstance(v, (int, float, np.number)) else 0.0 for v in patrimonio_mensal]
-    return patrimonio_mensal, None
+    patrimonio_mensal = patrimonio + [
+        cota_bruta[meses_acc + 1 + i] * cotas_restantes[i] for i in range(len(cotas_restantes))
+    ]
+
+    patrimonio_mensal = [float(v) for v in patrimonio_mensal]
+    return patrimonio_mensal, valor_liquido
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
-    x, y = 20.0, 40000.0
-    tol = 0.1
-    max_iter = 100
-    iter_count = 0
+    limite_iteracoes = 100
+    tolerancia = 0.01
+    inf, sup = 0, 100000
 
-    if tipo_objetivo == 'manter':
+    try:
         meta = calcular_aporte(0, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)[0][meses_acc]
-        while iter_count < max_iter:
-            mid = (x + y) / 2
-            resultado = calcular_aporte(mid, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)[0][-1]
-            if abs(resultado - meta) < tol:
-                return round(mid, 2)
-            if resultado < meta:
-                x = mid
-            else:
-                y = mid
-            iter_count += 1
-        raise ValueError("Não foi possível encontrar um aporte que satisfaça o objetivo dentro do limite de iterações.")
+    except:
+        raise Exception("Erro ao calcular a meta financeira. Verifique seus dados.")
 
-    else:
-        alvo = outro_valor if tipo_objetivo == 'outro valor' else resgate_necessario
-        while iter_count < max_iter:
-            mid = (x + y) / 2
-            resultado = calcular_aporte(mid, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)[0][-1]
-            if abs(resultado - alvo) < tol:
-                return round(mid, 2)
-            if resultado < alvo:
-                x = mid
-            else:
-                y = mid
-            iter_count += 1
-        raise ValueError("Não foi possível encontrar um aporte que satisfaça o objetivo dentro do limite de iterações.")
+    for _ in range(limite_iteracoes):
+        mid = (inf + sup) / 2
+        patrimonio, _ = calcular_aporte(mid, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)
+        final = patrimonio[-1]
 
+        if tipo_objetivo == "manter":
+            alvo = patrimonio[meses_acc]
+        elif tipo_objetivo == "zerar":
+            alvo = 0
+        elif tipo_objetivo == "outro valor" and outro_valor is not None:
+            alvo = outro_valor
+        else:
+            raise Exception("Tipo de objetivo inválido.")
+
+        if abs(final - alvo) < tolerancia:
+            return round(mid, 2)
+        elif final < alvo:
+            inf = mid
+        else:
+            sup = mid
+
+    raise Exception("⚠️ O sistema não conseguiu calcular um valor de aporte viável com os dados fornecidos. Tente ajustá-los para objetivos mais alcançáveis.")

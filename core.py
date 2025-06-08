@@ -22,25 +22,27 @@ def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
         raise ValueError("O imposto deve estar entre 0 e 1 (ex: 0.15 para 15%).")
     if meses_acc == 0:
         raise ValueError("O período de acumulação não pode ser zero.")
+
     total_meses = meses_acc + meses_cons
     cota_bruta = np.cumprod(np.full(total_meses + 1, 1 + taxa))
+
     if valor_inicial == 0:
         cota_bruta = np.insert(cota_bruta, 0, 1)[:-1]
 
     cotas_finais = cota_bruta[meses_acc + 1:]
     cotas_iniciais = cota_bruta[:meses_acc + 1]
     matriz_cotas_liq = cotas_finais - ((cotas_finais[None, :] - cotas_iniciais[:, None]) * imposto)
+
     return cota_bruta, matriz_cotas_liq
 
 def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     if valor_aporte < 0 or valor_inicial < 0 or resgate_necessario < 0:
         raise ValueError("Valores monetários não podem ser negativos.")
-    if matriz_cotas_liq.shape[0] != meses_acc + 1:
-        raise ValueError("A matriz de cotas líquidas tem um número de linhas incompatível com o período de acumulação.")
 
     n_aportes = meses_acc + 1
     patrimonio = np.zeros(n_aportes)
     aportes = np.full(n_aportes, valor_aporte)
+
     if valor_inicial > 0:
         patrimonio[0] = valor_inicial
         aportes[0] = valor_inicial
@@ -52,40 +54,33 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
     qtd_cotas_aportes = aportes / cota_bruta[:n_aportes]
 
     nova_matriz = matriz_cotas_liq.T
-    valor_liquido = []
-    qtd_cotas_tempo = []
+    cotas_restantes = qtd_cotas_aportes.copy()
+    patrimonio_bruto = list(patrimonio)  # fase de acumulação
+    patrimonio_liquido = []
 
-    for col_index, col in enumerate(nova_matriz):
-        linha_liquida = qtd_cotas_aportes * col
-        resgate_liquido = 0
-        cotas_temp = qtd_cotas_aportes.copy()
-
-        for i in range(len(linha_liquida)):
-            if resgate_liquido >= resgate_necessario:
+    for col_index, cotas_liq_coluna in enumerate(nova_matriz):
+        resgatado = 0
+        valor_mensal = 0
+        for i in range(len(cotas_restantes)):
+            if resgatado >= resgate_necessario:
                 break
-            restante = resgate_necessario - resgate_liquido
-            if linha_liquida[i] >= restante:
-                cotas_temp[i] -= restante / matriz_cotas_liq[i][col_index]
-                linha_liquida[i] -= restante
-                resgate_liquido = resgate_necessario
+            valor_unit = matriz_cotas_liq[i][col_index]
+            qtd_disponivel = cotas_restantes[i]
+            valor_disponivel = qtd_disponivel * valor_unit
+
+            if valor_disponivel + resgatado <= resgate_necessario:
+                resgatado += valor_disponivel
+                cotas_restantes[i] = 0
             else:
-                resgate_liquido += linha_liquida[i]
-                linha_liquida[i] = 0
-                cotas_temp[i] = 0
+                needed = resgate_necessario - resgatado
+                cotas_restantes[i] -= needed / valor_unit
+                resgatado = resgate_necessario
 
-        qtd_cotas_tempo.append(cotas_temp)
-        valor_liquido.append(linha_liquida)
+        valor_mensal = sum(cotas_restantes * cota_bruta[meses_acc + 1 + col_index])
+        patrimonio_bruto.append(valor_mensal)
+        patrimonio_liquido.append(resgatado)
 
-    valor_liquido = np.array(valor_liquido).T
-    cotas_durante_resgates = np.sum(np.array(qtd_cotas_tempo), axis=0)
-    cotas_no_tempo = np.concatenate([qtd_cotas_total, cotas_durante_resgates])
-
-    if len(cota_bruta) < len(cotas_no_tempo):
-        raise ValueError("O vetor de cotas brutas é menor que o necessário para o cálculo.")
-
-    patrimonio_bruto = cota_bruta[:len(cotas_no_tempo)] * cotas_no_tempo
-    patrimonio_liquido = np.sum(valor_liquido, axis=0)
-    return patrimonio_bruto, patrimonio_liquido
+    return np.array(patrimonio_bruto), np.array(patrimonio_liquido)
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     if tipo_objetivo not in ["manter", "zerar", "outro valor"]:

@@ -1,6 +1,5 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
+import plotly.graph_objects as go
 import numpy as np
 from core import (
     taxa_mensal, calcular_meses_acc, calcular_meses_cons,
@@ -94,20 +93,31 @@ if submit:
         colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
-        # 📈 Gráfico de evolução do patrimônio com base em patrimonio_bruto
+        # 📈 Gráfico interativo com Plotly
         st.subheader("📈 Evolução do patrimônio no tempo")
 
         anos = [idade_atual + i for i in range(len(patrimonio_bruto) // 12)]
         patrimonio_anual = [np.mean(patrimonio_bruto[i*12:(i+1)*12]) for i in range(len(anos))]
 
-        fig, ax = plt.subplots()
-        ax.plot(anos, patrimonio_anual, linewidth=2.5, label="Evolução do patrimônio")
-        ax.set_xlabel("Idade (anos)")
-        ax.set_ylabel("Patrimônio (R$)")
-        ax.yaxis.set_major_formatter(mtick.StrMethodFormatter("R$ {x:,.0f}"))
-        ax.grid(True, linestyle="--", alpha=0.4)
-        ax.legend()
-        st.pyplot(fig)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=anos,
+            y=patrimonio_anual,
+            mode="lines+markers",
+            name="Evolução do patrimônio",
+            line=dict(width=3, color="royalblue"),
+            hovertemplate="Idade: %{x}<br>Patrimônio: R$ %{y:,.2f}<extra></extra>"
+        ))
+
+        fig.update_layout(
+            xaxis_title="Idade (anos)",
+            yaxis_title="Patrimônio (R$)",
+            hovermode="x",
+            template="plotly_white",
+            margin=dict(l=40, r=40, t=30, b=40)
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
     except ValueError as e:
         erro = str(e)

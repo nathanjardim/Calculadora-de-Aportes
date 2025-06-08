@@ -79,4 +79,3 @@ if st.button("Calcular Aporte Ideal"):
 
     except Exception as e:
         st.error(f"⚠️ Erro: {str(e)}")
-

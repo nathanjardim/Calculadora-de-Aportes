@@ -74,6 +74,16 @@ if submit:
             resgate_necessario
         )
 
+        patrimonio_bruto, _ = calcular_aporte(
+            aporte_ideal,
+            poupanca_atual,
+            meses_acc,
+            taxa,
+            cota_bruta,
+            matriz_cotas_liq,
+            resgate_necessario
+        )
+
         st.success(f"Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
         total_poupanca = aporte_ideal * meses_acc
         percentual_renda = (aporte_ideal / renda_atual) * 100
@@ -84,11 +94,11 @@ if submit:
         colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
-        # 📈 Gráfico de evolução do patrimônio
+        # 📈 Gráfico de evolução do patrimônio com base em patrimonio_bruto
         st.subheader("📈 Evolução do patrimônio no tempo")
 
-        anos = [idade_atual + i for i in range(len(cota_bruta) // 12)]
-        patrimonio_anual = [np.mean(cota_bruta[i*12:(i+1)*12]) for i in range(len(anos))]
+        anos = [idade_atual + i for i in range(len(patrimonio_bruto) // 12)]
+        patrimonio_anual = [np.mean(patrimonio_bruto[i*12:(i+1)*12]) for i in range(len(anos))]
 
         fig, ax = plt.subplots()
         ax.plot(anos, patrimonio_anual, linewidth=2.5, label="Evolução do patrimônio")

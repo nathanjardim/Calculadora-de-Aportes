@@ -78,7 +78,9 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
         cotas_vivas = nova_cotas
         patrimonio_mensal.append(np.dot(cotas_vivas, cota_bruta[mes_resgate + n_aportes]))
 
-    return np.array(patrimonio_mensal).flatten().tolist(), None
+    # 🚫 Evita erro de estrutura irregular no retorno
+    patrimonio_mensal = [float(v) for v in patrimonio_mensal]
+    return patrimonio_mensal, None
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     if tipo_objetivo not in ["manter", "zerar", "outro valor"]:

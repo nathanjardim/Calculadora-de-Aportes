@@ -82,29 +82,22 @@ if submit:
         colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
-        # 📈 Gráfico anual do patrimônio
+        # 📈 Gráfico de patrimônio mês a mês com suavidade no tempo
         patrimonio, _ = calcular_aporte(
             aporte_ideal, poupanca_atual, meses_acc, taxa,
             cota_bruta, matriz_cotas_liq, resgate_necessario
         )
 
-        anos_total = (idade_morte - idade_atual + 1)
-        lista_anos = [idade_atual + i for i in range(anos_total)]
-        patrimonio_por_ano = []
-
-        for i in range(anos_total):
-            inicio = i * 12
-            fim = min(inicio + 12, len(patrimonio))
-            media_anual = sum(patrimonio[inicio:fim]) / (fim - inicio)
-            patrimonio_por_ano.append(media_anual)
+        total_meses = len(patrimonio)
+        anos_meses = [idade_atual + (i / 12) for i in range(total_meses)]
 
         df = pd.DataFrame({
-            "Ano": lista_anos,
-            "Patrimônio Bruto": patrimonio_por_ano
+            "Tempo (anos)": anos_meses,
+            "Patrimônio Bruto": patrimonio
         })
 
-        st.subheader("📈 Projeção do Patrimônio ao Longo dos Anos")
-        st.line_chart(df.set_index("Ano"))
+        st.subheader("📈 Projeção do Patrimônio ao Longo do Tempo (Mensal)")
+        st.line_chart(df.set_index("Tempo (anos)"))
         st.caption(f"🔵 Fase de acumulação: até os {idade_aposentadoria} anos • 🔵 Fase de consumo: até os {idade_morte} anos.")
 
     except ValueError as e:

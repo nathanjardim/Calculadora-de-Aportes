@@ -1,121 +1,130 @@
-import numpy as np
+import streamlit as st
+import pandas as pd
+from core import (
+    taxa_mensal, calcular_meses_acc, calcular_meses_cons,
+    gerar_cotas, calcular_aporte, bissecao
+)
 
-def taxa_mensal(taxa_anual):
-    if not (0 <= taxa_anual <= 1):
-        raise ValueError("A taxa de juros anual deve estar entre 0 e 1 (ex: 0.08 para 8%).")
-    if taxa_anual > 0.5:
-        raise ValueError("Atenção: taxa de juros anual muito alta (acima de 50%). Revise o input.")
-    return (1 + taxa_anual) ** (1 / 12) - 1
+st.set_page_config(page_title="Wealth Planning", layout="centered")
+st.title("📊 Wealth Planning")
 
-def calcular_meses_acc(idade_atual, idade_aposentadoria):
-    if idade_aposentadoria <= idade_atual:
-        raise ValueError("A idade de aposentadoria deve ser maior que a idade atual.")
-    return (idade_aposentadoria - idade_atual + 1) * 12
+with st.form("formulario"):
+    st.header("🔹 Dados Iniciais")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, value=70000.0)
+    with col2:
+        idade_atual = st.number_input("Idade atual", min_value=0, max_value=120, value=42)
+    with col3:
+        poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0.0, value=1000000.0)
 
-def calcular_meses_cons(idade_aposentadoria, idade_morte):
-    if idade_morte <= idade_aposentadoria:
-        raise ValueError("A idade de morte deve ser maior que a de aposentadoria.")
-    return (idade_morte - idade_aposentadoria) * 12
+    st.header("🔹 Dados Econômicos")
+    col4, col5 = st.columns(2)
+    with col4:
+        taxa_anual = st.number_input("Taxa de juros real (aa)", min_value=0.0, max_value=1.0, value=0.05)
+    with col5:
+        imposto = st.number_input("IR sobre lucro", min_value=0.0, max_value=1.0, value=0.15)
 
-def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
-    if not (0 <= imposto <= 1):
-        raise ValueError("O imposto deve estar entre 0 e 1 (ex: 0.15 para 15%).")
-    if meses_acc == 0:
-        raise ValueError("O período de acumulação não pode ser zero.")
-    total_meses = meses_acc + meses_cons
-    cota_bruta = np.cumprod(np.full(total_meses + 1, 1 + taxa))
-    if valor_inicial == 0:
-        cota_bruta = np.insert(cota_bruta, 0, 1)[:-1]
+    st.header("🔹 Aposentadoria")
+    col6, col7, col8 = st.columns(3)
+    with col6:
+        renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, value=40000.0)
+    with col7:
+        idade_aposentadoria = st.number_input("Idade aposentadoria", min_value=idade_atual+1, max_value=120, value=65)
+    with col8:
+        idade_morte = st.number_input("Idade fim (vida)", min_value=idade_aposentadoria+1, max_value=130, value=95)
 
-    cotas_finais = cota_bruta[meses_acc + 1:]
-    cotas_iniciais = cota_bruta[:meses_acc + 1]
-    matriz_cotas_liq = cotas_finais - ((cotas_finais[None, :] - cotas_iniciais[:, None]) * imposto)
-    return cota_bruta, matriz_cotas_liq
+    st.header("🔹 Renda")
+    col9, col10 = st.columns(2)
+    with col9:
+        previdencia = st.number_input("Previdência esperada (R$)", min_value=0.0, value=0.0)
+    with col10:
+        outras_rendas = st.number_input("Outras fontes (aluguel etc) (R$)", min_value=0.0, value=0.0)
 
-def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
-    if valor_aporte < 0 or valor_inicial < 0 or resgate_necessario < 0:
-        raise ValueError("Valores monetários não podem ser negativos.")
-    if matriz_cotas_liq.shape[0] != meses_acc + 1:
-        raise ValueError("A matriz de cotas líquidas tem um número de linhas incompatível com o período de acumulação.")
+    st.header("🔹 Fim do Patrimônio")
+    col11, col12 = st.columns([2, 1])
+    with col11:
+        tipo_objetivo = st.selectbox("Objetivo ao fim do período", ["Manter", "Zerar", "Outro valor"])
+    with col12:
+        outro_valor = None
+        if tipo_objetivo.lower() == "outro valor":
+            outro_valor = st.number_input("Valor desejado (R$)", min_value=0.0, value=0.0)
 
-    n_aportes = meses_acc + 1
-    patrimonio = np.zeros(n_aportes)
-    aportes = np.full(n_aportes, valor_aporte)
-    if valor_inicial > 0:
-        patrimonio[0] = valor_inicial
-        aportes[0] = valor_inicial
+    submit = st.form_submit_button("📤 Definir Aportes")
 
-    for i in range(1, n_aportes):
-        patrimonio[i] = patrimonio[i - 1] * (1 + taxa) + aportes[i]
+if submit:
+    try:
+        taxa = taxa_mensal(taxa_anual)
+        meses_acc = calcular_meses_acc(idade_atual, idade_aposentadoria)
+        meses_cons = calcular_meses_cons(idade_aposentadoria, idade_morte)
+        resgate_necessario = renda_desejada - outras_rendas - previdencia
 
-    qtd_cotas_total = patrimonio / cota_bruta[:n_aportes]
-    qtd_cotas_aportes = aportes / cota_bruta[:n_aportes]
+        cota_bruta, matriz_cotas_liq = gerar_cotas(taxa, meses_acc, meses_cons, poupanca_atual, imposto)
 
-    nova_matriz = matriz_cotas_liq.T
-    patrimonio_mensal = list(patrimonio.copy())  # já inclui a fase de acumulação
+        aporte_ideal = bissecao(
+            tipo_objetivo.lower(),
+            outro_valor,
+            poupanca_atual,
+            meses_acc,
+            taxa,
+            cota_bruta,
+            matriz_cotas_liq,
+            resgate_necessario
+        )
 
-    cotas_vivas = qtd_cotas_aportes.copy()
+        st.success(f"Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
+        total_poupanca = aporte_ideal * meses_acc
+        percentual_renda = (aporte_ideal / renda_atual) * 100
 
-    for mes_resgate in range(nova_matriz.shape[0]):
-        linha_valores = nova_matriz[mes_resgate]
-        resgatado = 0
-        nova_cotas = cotas_vivas.copy()
+        st.subheader("📘 Resumo do planejamento")
+        colr1, colr2, colr3 = st.columns(3)
+        colr1.metric("Aportes mensais", f"R$ {aporte_ideal:,.2f}")
+        colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
+        colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
-        for i in range(len(cotas_vivas)):
-            if resgatado >= resgate_necessario:
-                break
+        # 📈 Gráfico de patrimônio mês a mês com suavidade no tempo
+        patrimonio, _ = calcular_aporte(
+            aporte_ideal, poupanca_atual, meses_acc, taxa,
+            cota_bruta, matriz_cotas_liq, resgate_necessario
+        )
 
-            valor_cota = linha_valores[i]
-            valor_disponivel = nova_cotas[i] * valor_cota
-            restante = resgate_necessario - resgatado
+        total_meses = len(patrimonio)
+        anos_meses = [idade_atual + (i / 12) for i in range(total_meses)]
 
-            if valor_disponivel >= restante:
-                cotas_usadas = restante / valor_cota
-                nova_cotas[i] -= cotas_usadas
-                resgatado += restante
-            else:
-                resgatado += valor_disponivel
-                nova_cotas[i] = 0
+        df = pd.DataFrame({
+            "Tempo (anos)": anos_meses,
+            "Patrimônio Bruto": patrimonio
+        })
 
-        cotas_vivas = nova_cotas
-        patrimonio_mensal.append(np.dot(cotas_vivas, cota_bruta[mes_resgate + n_aportes]))
+        st.subheader("📈 Projeção do Patrimônio ao Longo do Tempo (Mensal)")
+        st.line_chart(df.set_index("Tempo (anos)"))
+        st.caption(f"🔵 Fase de acumulação: até os {idade_aposentadoria} anos • 🔵 Fase de consumo: até os {idade_morte} anos.")
 
-    return patrimonio_mensal, None
-
-def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
-    if tipo_objetivo not in ["manter", "zerar", "outro valor"]:
-        raise ValueError("O tipo de objetivo deve ser: 'manter', 'zerar' ou 'outro valor'.")
-    if tipo_objetivo == "outro valor" and outro_valor is None:
-        raise ValueError("Você deve informar o valor final desejado para o objetivo 'outro valor'.")
-
-    x, y = 20.0, 40000.0
-    tol = 0.1
-    max_iter = 100
-    iter_count = 0
-
-    if tipo_objetivo == 'manter':
-        meta = calcular_aporte(0, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)[0][meses_acc]
-        while iter_count < max_iter:
-            mid = (x + y) / 2
-            resultado = calcular_aporte(mid, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)[0][-1]
-            if abs(resultado - meta) < tol:
-                return round(mid, 2)
-            if resultado < meta:
-                x = mid
-            else:
-                y = mid
-            iter_count += 1
-        raise ValueError("Não foi possível encontrar um aporte que satisfaça o objetivo dentro do limite de iterações.")
-    else:
-        alvo = outro_valor if tipo_objetivo == 'outro valor' else resgate_necessario
-        while iter_count < max_iter:
-            mid = (x + y) / 2
-            resultado = calcular_aporte(mid, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)[0][-1]
-            if abs(resultado - alvo) < tol:
-                return round(mid, 2)
-            if resultado < alvo:
-                x = mid
-            else:
-                y = mid
-            iter_count += 1
-        raise ValueError("Não foi possível encontrar um aporte que satisfaça o objetivo dentro do limite de iterações.")
+    except ValueError as e:
+        erro = str(e)
+        if "idade de aposentadoria" in erro:
+            st.error("⚠️ A idade de aposentadoria deve ser maior do que a sua idade atual.")
+        elif "idade de morte" in erro:
+            st.error("⚠️ A expectativa de vida deve ser maior que a idade de aposentadoria.")
+        elif "imposto" in erro:
+            st.error("⚠️ O campo de imposto deve ser preenchido como porcentagem decimal. Exemplo: 0.15 para 15%.")
+        elif "negativos" in erro:
+            st.error("⚠️ Por favor, preencha todos os valores com números positivos ou zero.")
+        elif "tipo de objetivo" in erro:
+            st.error("⚠️ O objetivo selecionado está inválido. Use: 'manter', 'zerar' ou 'outro valor'.")
+        elif "informar o valor final" in erro:
+            st.error("⚠️ Informe o valor final desejado ao escolher o objetivo 'outro valor'.")
+        elif "matriz de cotas líquidas" in erro:
+            st.error("⚠️ O cálculo interno falhou por um erro técnico. Tente ajustar os dados e tente novamente.")
+        elif "cotas brutas é menor" in erro:
+            st.error("🟥 Os dados informados exigem um valor muito alto ou uma idade de vida muito longa. Tente ajustar a expectativa de vida, renda desejada ou rentabilidade para valores mais realistas.")
+        elif "não foi possível encontrar um aporte" in erro.lower():
+            st.error("⚠️ O sistema não conseguiu calcular um valor de aporte viável com os dados fornecidos. Tente ajustá-los para objetivos mais alcançáveis.")
+        elif "taxa de juros anual" in erro:
+            st.error("⚠️ Digite a taxa de rentabilidade como decimal. Exemplo: 0.08 para 8% ao ano.")
+        elif "muito alta" in erro:
+            st.error("⚠️ A rentabilidade anual está muito alta. Revise esse valor, pois pode não ser realista.")
+        elif "período de acumulação" in erro:
+            st.error("⚠️ Você precisa ter pelo menos 1 ano antes da aposentadoria para acumular investimentos.")
+        else:
+            st.error(f"⚠️ Erro: {erro}")

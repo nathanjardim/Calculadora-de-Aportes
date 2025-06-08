@@ -3,23 +3,31 @@ import numpy as np
 def taxa_mensal(taxa_anual):
     return (1 + taxa_anual) ** (1/12) - 1
 
-def calcular_cotas(taxa, meses_totais):
-    cota_bruta = [1]
-    for _ in range(meses_totais):
-        cota_bruta.append(cota_bruta[-1] * (1 + taxa))
-    return cota_bruta
+def calcular_meses_acc(idade_atual, idade_aposentadoria):
+    return (idade_aposentadoria - idade_atual + 1) * 12
 
-def calcular_matriz_cotas_liquidas(cota_bruta, meses_acc, imposto_renda):
-    matriz = []
+def calcular_meses_cons(idade_aposentadoria, idade_fim):
+    return (idade_fim - idade_aposentadoria) * 12
+
+def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto_renda):
+    total_meses = meses_acc + meses_cons
+    cota_bruta = [1]
+    for _ in range(total_meses):
+        cota_bruta.append(cota_bruta[-1] * (1 + taxa))
+    if valor_inicial == 0:
+        cota_bruta = cota_bruta[1:]
+
+    matriz_cotas_liq = []
     for i in range(meses_acc + 1):
         linha = []
-        for j in range(len(cota_bruta) - meses_acc - 1):
-            bruto = cota_bruta[i + j + 1]
+        for j in range(meses_cons):
+            bruto = cota_bruta[meses_acc + 1 + j]
             base = cota_bruta[i]
             liquido = bruto - (bruto - base) * imposto_renda
             linha.append(liquido)
-        matriz.append(linha)
-    return np.array(matriz)
+        matriz_cotas_liq.append(linha)
+
+    return cota_bruta, matriz_cotas_liq
 
 def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     patrimonio = [valor_inicial]
@@ -29,10 +37,10 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
         novo_valor = patrimonio[-1] * (1 + taxa) + aportes[i]
         patrimonio.append(novo_valor)
 
-    qtd_cotas_total = [p / c for p, c in zip(patrimonio, cota_bruta[:len(patrimonio)])]
-    qtd_cotas_aportes = [a / c for a, c in zip(aportes, cota_bruta[:len(aportes)])]
+    qtd_cotas_total = [p / c if c != 0 else 0 for p, c in zip(patrimonio, cota_bruta[:len(patrimonio)])]
+    qtd_cotas_aportes = [a / c if c != 0 else 0 for a, c in zip(aportes, cota_bruta[:len(aportes)])]
 
-    nova_matriz = matriz_cotas_liq.T
+    nova_matriz = np.array(matriz_cotas_liq).T
     valor_liquido2 = []
 
     for col in range(nova_matriz.shape[0]):
@@ -62,7 +70,7 @@ def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_br
             erro = patrimonio[-1] - outro_valor
 
         if abs(erro) < 0.01:
-            return mid
+            return round(mid, 2)
 
         if tipo_objetivo in ['manter', 'outro valor']:
             if erro < 0:

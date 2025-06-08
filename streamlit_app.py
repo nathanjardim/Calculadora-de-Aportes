@@ -1,76 +1,49 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-from core import (
-    taxa_mensal,
-    calcular_meses_acc,
-    calcular_meses_cons,
-    gerar_cotas,
-    calcular_aporte,
-    bissecao
-)
+import numpy as np
+from core import *
 
-st.set_page_config(page_title="Wealth Planning", layout="wide")
-st.title("💼 Wealth Planning - Simulador de Aportes para Aposentadoria")
-st.markdown("---")
+st.set_page_config(page_title="Wealth Planning", layout="centered")
 
-# 📌 Dados Iniciais
-st.markdown("### 📌 Dados Iniciais")
-col1, col2, col3 = st.columns(3)
+st.title("💰 Wealth Planning - Simulador de Aposentadoria")
+
+col1, col2 = st.columns(2)
+
 with col1:
-    renda_atual = st.number_input("Renda atual", min_value=0.0, value=7000.0, step=500.0)
+    idade_atual = st.number_input("Idade Atual", value=30)
+    idade_aposentadoria = st.number_input("Idade para Aposentadoria", value=60)
+    idade_fim = st.number_input("Expectativa de Vida", value=85)
+    valor_inicial = st.number_input("Valor Inicial Acumulado (R$)", value=200000)
+
 with col2:
-    idade_atual = st.number_input("Idade atual", min_value=0, max_value=100, value=30)
-with col3:
-    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=200000.0, step=10000.0)
+    renda_desejada = st.number_input("Renda Mensal Desejada na Aposentadoria (R$)", value=6000)
+    outras_rendas = st.number_input("Outras Rendas Mensais (R$)", value=1000)
+    previdencia = st.number_input("Previdência Mensal Esperada (R$)", value=1500)
+    taxa_juros = st.number_input("Taxa de Juros Real Anual (%)", value=8.0) / 100
 
-# 📈 Dados Econômicos
-st.markdown("### 📈 Dados Econômicos")
-col4, col5 = st.columns(2)
-with col4:
-    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=8.0) / 100
-with col5:
-    imposto_renda = st.number_input("IR (%)", min_value=0.0, max_value=100.0, value=15.0) / 100
+imposto_renda = st.slider("Alíquota de IR (%)", 0, 30, 15) / 100
+tipo_objetivo = st.selectbox("Objetivo no final do período", ["manter", "zerar", "outro valor"])
 
-# 🧓 Aposentadoria
-st.markdown("### 🧓 Aposentadoria")
-col6, col7 = st.columns(2)
-with col6:
-    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=6000.0, step=500.0)
-with col7:
-    idade_aposentadoria = st.number_input("Idade aposentadoria", min_value=0, max_value=100, value=60)
+outro_valor = None
+if tipo_objetivo == "outro valor":
+    outro_valor = st.number_input("Valor desejado ao final (R$)", value=100000)
 
-idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=85)
-
-# 💸 Renda Extra
-st.markdown("### 💸 Renda Extra")
-col8, col9 = st.columns(2)
-with col8:
-    previdencia = st.number_input("Previdência", min_value=0.0, value=1500.0)
-with col9:
-    outras_rendas = st.number_input("Aluguel ou outras fontes de renda", min_value=0.0, value=1000.0)
-
-resgate_necessario = renda_desejada - previdencia - outras_rendas
-
-# 🎯 Objetivo
-st.markdown("### 🎯 Objetivo do Patrimônio Final")
-col10, col11 = st.columns([1, 2])
-with col10:
-    tipo_objetivo = st.selectbox("Deseja manter, zerar ou deixar um valor final?", ["manter", "zerar", "outro valor"], index=0)
-with col11:
-    outro_valor = st.number_input("Se outro valor, qual?", min_value=0.0, value=0.0) if tipo_objetivo == "outro valor" else None
-
-# ▶️ Calcular
-if st.button("Calcular aporte ideal"):
+if st.button("Calcular Aporte Ideal"):
     try:
-        taxa = taxa_mensal(taxa_juros_anual)
-        meses_acc = calcular_meses_acc(idade_atual, idade_aposentadoria)
-        meses_cons = calcular_meses_cons(idade_aposentadoria, idade_fim)
-        cota_bruta, matriz_cotas_liq = gerar_cotas(taxa, meses_acc, meses_cons, poupanca_atual, imposto_renda)
+        meses_acc = (idade_aposentadoria - idade_atual + 1) * 12
+        meses_cons = (idade_fim - idade_aposentadoria) * 12
+        meses_totais = meses_acc + meses_cons
+
+        taxa = taxa_mensal(taxa_juros)
+        resgate_necessario = renda_desejada - outras_rendas - previdencia
+
+        cota_bruta = calcular_cotas(taxa, meses_totais)
+        matriz_cotas_liq = calcular_matriz_cotas_liquidas(cota_bruta, meses_acc, imposto_renda)
 
         aporte_ideal = bissecao(
-            tipo_objetivo.lower(),
+            tipo_objetivo,
             outro_valor,
-            poupanca_atual,
+            valor_inicial,
             meses_acc,
             taxa,
             cota_bruta,
@@ -78,25 +51,17 @@ if st.button("Calcular aporte ideal"):
             resgate_necessario
         )
 
-        patrimonio, _ = calcular_aporte(aporte_ideal, poupanca_atual, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)
-
-        st.success(f"✅ Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
-        st.write(f"📊 Patrimônio ao se aposentar: R$ {patrimonio[meses_acc]:,.2f}")
-        st.write(f"📈 Patrimônio final aos {idade_fim} anos: R$ {patrimonio[-1]:,.2f}")
-
-        # 📉 Gráfico
-        st.markdown("### 📊 Evolução do Patrimônio")
-        anos = list(range(idade_atual, idade_fim + 1))
-        patrimonio_anual = [patrimonio[i * 12] for i in range(len(anos))]
-
-        fig, ax = plt.subplots()
-        ax.plot(anos, patrimonio_anual, marker="o", linestyle="-", linewidth=2)
-        ax.set_xlabel("Idade")
-        ax.set_ylabel("Patrimônio (R$)")
-        ax.set_title("Projeção do Patrimônio ao Longo do Tempo")
-        ax.grid(True)
-        ax.legend(["Patrimônio acumulado"])
-        st.pyplot(fig)
-
+        if aporte_ideal is None:
+            st.error("⚠️ O sistema não conseguiu calcular um valor de aporte viável com os dados fornecidos. Tente ajustar os parâmetros.")
+        else:
+            patrimonio, _ = calcular_aporte(aporte_ideal, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)
+            anos = [idade_atual + i // 12 for i in range(len(patrimonio))]
+            plt.figure(figsize=(10, 4))
+            plt.plot(anos, patrimonio, label="Evolução do Patrimônio")
+            plt.xlabel("Idade")
+            plt.ylabel("Valor (R$)")
+            plt.legend()
+            st.success(f"✅ Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
+            st.pyplot(plt)
     except Exception as e:
-        st.error(f"⚠️ Erro: {str(e)}")
+        st.error(f"⚠️ Erro inesperado: {e}")

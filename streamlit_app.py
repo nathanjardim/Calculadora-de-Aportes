@@ -7,30 +7,27 @@ from core import (
 
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 st.title("💼 Wealth Planning – Simulador de Aposentadoria")
+st.markdown("Preencha seus dados para descobrir o aporte mensal ideal para atingir seus objetivos.")
 
-st.markdown("### Legenda:")
-st.text_input("Legenda:", label_visibility="collapsed")
-st.markdown("")
-
-# BLOCO 1: DADOS INICIAIS
+# 📌 Dados Iniciais
 st.markdown("#### 📌 Dados Iniciais")
 col1, col2, col3 = st.columns(3)
 with col1:
-    renda_atual = st.number_input("Renda atual", min_value=0.0, value=70000.0, step=1000.0, format="%.2f")
+    renda_atual = st.number_input("Renda atual", min_value=0.0, value=70000.0, step=1000.0)
 with col2:
     idade_atual = st.number_input("Idade atual", min_value=0, max_value=100, value=42)
 with col3:
-    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=1_000_000.0, step=10000.0, format="%.2f")
+    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=1_000_000.0, step=10000.0)
 
-# BLOCO 2: DADOS ECONÔMICOS
+# 📈 Dados Econômicos
 st.markdown("#### 📈 Dados Econômicos")
 col4, col5 = st.columns(2)
 with col4:
-    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=5.0, step=0.5) / 100
+    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=5.0) / 100
 with col5:
-    imposto_renda = st.number_input("IR (%)", min_value=0.0, max_value=100.0, value=15.0, step=1.0) / 100
+    imposto_renda = st.number_input("IR (%)", min_value=0.0, max_value=100.0, value=15.0) / 100
 
-# BLOCO 3: APOSENTADORIA
+# 🧓 Aposentadoria
 st.markdown("#### 🧓 Aposentadoria")
 col6, col7 = st.columns(2)
 with col6:
@@ -40,17 +37,17 @@ with col7:
 
 idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=95)
 
-# BLOCO 4: RENDA
+# 💸 Renda
 st.markdown("#### 💸 Renda")
 col8, col9 = st.columns(2)
 with col8:
     previdencia = st.number_input("Previdência", min_value=0.0, value=0.0)
 with col9:
-    outras_rendas = st.number_input("Aluguel ou outras fontes de rendas", min_value=0.0, value=0.0)
+    outras_rendas = st.number_input("Aluguel ou outras fontes de renda", min_value=0.0, value=0.0)
 
 resgate_necessario = renda_desejada - previdencia - outras_rendas
 
-# BLOCO 5: OBJETIVO
+# 🎯 Objetivo
 st.markdown("#### 🎯 Fim do Patrimônio")
 col10, col11 = st.columns([1, 2])
 with col10:
@@ -58,7 +55,7 @@ with col10:
 with col11:
     outro_valor = st.number_input("Se outro valor, qual?", min_value=0.0, value=0.0) if tipo_objetivo == "outro valor" else None
 
-# BOTÃO FINAL
+# 🚀 Resultado
 st.markdown("### 🚀 Resultado")
 if st.button("Calcular Aporte Ideal"):
     try:
@@ -89,10 +86,10 @@ if st.button("Calcular Aporte Ideal"):
             resgate_necessario
         )
 
-        st.success(f"Aportes mensais: R$ {aporte:,.2f}")
-        st.write(f"Poupança necessária: R$ {patrimonio[meses_acc + 1]:,.2f}")
-        st.write(f"Anos de aportes: {round(meses_acc / 12)}")
-        st.write(f"Percentual da renda atual: {aporte / renda_atual * 100:.2f}%")
+        st.success(f"💰 Aportes mensais: R$ {aporte:,.2f}")
+        st.write(f"📦 Poupança necessária: R$ {patrimonio[meses_acc + 1]:,.2f}")
+        st.write(f"🕒 Anos de aportes: {round(meses_acc / 12)}")
+        st.write(f"📊 Percentual da renda atual: {aporte / renda_atual * 100:.2f}%")
 
         df = pd.DataFrame({
             "Idade": list(range(idade_atual, idade_atual + len(patrimonio) // 12 + 1)),

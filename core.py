@@ -60,7 +60,7 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
                 cotas_temp[i] = 0
 
         qtd_cotas_tempo.append(cotas_temp)
-        valor_liquido.append(linha_liquido)
+        valor_liquido.append(linha_liquida)
 
     valor_liquido = np.array(valor_liquido).T
     cotas_durante_resgates = np.sum(np.array(qtd_cotas_tempo), axis=0)

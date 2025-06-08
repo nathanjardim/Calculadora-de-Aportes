@@ -1,5 +1,5 @@
 import streamlit as st
-import matplotlib.pyplot as plt
+import pandas as pd
 from core import (
     taxa_mensal, calcular_meses_acc, calcular_meses_cons,
     gerar_cotas, bissecao, calcular_aporte
@@ -60,22 +60,18 @@ if st.button("Calcular Aporte Ideal"):
             cota_bruta, matriz_cotas_liq, resgate_necessario
         )
 
-        # Criar lista de anos
-        anos = list(range(idade_atual, idade_atual + len(patrimonio_mensal)//12 + 1))
-        valores_por_ano = [
-            sum(patrimonio_mensal[i*12:(i+1)*12]) / 12
-            for i in range(len(anos))
-        ]
+        # Gráfico com st.line_chart (sem matplotlib)
+        df = pd.DataFrame({
+            "Idade": list(range(idade_atual, idade_atual + len(patrimonio_mensal) // 12 + 1)),
+            "Patrimônio": [
+                sum(patrimonio_mensal[i*12:(i+1)*12]) / 12
+                for i in range(len(patrimonio_mensal) // 12 + 1)
+            ]
+        })
 
-        # Gráfico
-        fig, ax = plt.subplots(figsize=(10, 4))
-        ax.plot(anos[:len(valores_por_ano)], valores_por_ano, label="Patrimônio projetado", linewidth=2)
-        ax.set_xlabel("Idade")
-        ax.set_ylabel("R$ Patrimônio")
-        ax.set_title("📊 Evolução do Patrimônio ao Longo do Tempo")
-        ax.legend()
-        ax.grid(True)
-        st.pyplot(fig)
+        st.subheader("📊 Projeção do Patrimônio ao Longo do Tempo")
+        st.line_chart(df.set_index("Idade"))
+        st.caption("🔵 Fase de acumulação até a aposentadoria • 🔵 Fase de consumo após a aposentadoria")
 
     except Exception as e:
         st.error(f"⚠️ Erro: {str(e)}")

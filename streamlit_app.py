@@ -10,26 +10,24 @@ from core import (
 )
 
 st.set_page_config(page_title="Wealth Planning", layout="wide")
-
 st.title("💼 Wealth Planning - Simulador de Aportes para Aposentadoria")
-
 st.markdown("---")
 
 # 📌 Dados Iniciais
 st.markdown("### 📌 Dados Iniciais")
 col1, col2, col3 = st.columns(3)
 with col1:
-    renda_atual = st.number_input("Renda atual", min_value=0.0, value=9000.0, step=500.0)
+    renda_atual = st.number_input("Renda atual", min_value=0.0, value=7000.0, step=500.0)
 with col2:
     idade_atual = st.number_input("Idade atual", min_value=0, max_value=100, value=30)
 with col3:
-    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=300000.0, step=10000.0)
+    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=200000.0, step=10000.0)
 
 # 📈 Dados Econômicos
 st.markdown("### 📈 Dados Econômicos")
 col4, col5 = st.columns(2)
 with col4:
-    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=6.0) / 100
+    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=8.0) / 100
 with col5:
     imposto_renda = st.number_input("IR (%)", min_value=0.0, max_value=100.0, value=15.0) / 100
 
@@ -37,11 +35,11 @@ with col5:
 st.markdown("### 🧓 Aposentadoria")
 col6, col7 = st.columns(2)
 with col6:
-    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=7000.0, step=500.0)
+    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=6000.0, step=500.0)
 with col7:
-    idade_aposentadoria = st.number_input("Idade aposentadoria", min_value=0, max_value=100, value=65)
+    idade_aposentadoria = st.number_input("Idade aposentadoria", min_value=0, max_value=100, value=60)
 
-idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=90)
+idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=85)
 
 # 💸 Renda Extra
 st.markdown("### 💸 Renda Extra")
@@ -101,4 +99,4 @@ if st.button("Calcular aporte ideal"):
         st.pyplot(fig)
 
     except Exception as e:
-        st.error(str(e))
+        st.error(f"⚠️ Erro: {str(e)}")

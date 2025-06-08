@@ -13,17 +13,17 @@ st.markdown("Preencha seus dados para descobrir o aporte mensal ideal para ating
 st.markdown("#### 📌 Dados Iniciais")
 col1, col2, col3 = st.columns(3)
 with col1:
-    renda_atual = st.number_input("Renda atual", min_value=0.0, value=70000.0, step=1000.0)
+    renda_atual = st.number_input("Renda atual", min_value=0.0, value=10000.0, step=500.0)
 with col2:
-    idade_atual = st.number_input("Idade atual", min_value=0, max_value=100, value=42)
+    idade_atual = st.number_input("Idade atual", min_value=0, max_value=100, value=30)
 with col3:
-    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=1_000_000.0, step=10000.0)
+    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=200000.0, step=10000.0)
 
 # 📈 Dados Econômicos
 st.markdown("#### 📈 Dados Econômicos")
 col4, col5 = st.columns(2)
 with col4:
-    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=5.0) / 100
+    taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=6.0) / 100
 with col5:
     imposto_renda = st.number_input("IR (%)", min_value=0.0, max_value=100.0, value=15.0) / 100
 
@@ -31,19 +31,19 @@ with col5:
 st.markdown("#### 🧓 Aposentadoria")
 col6, col7 = st.columns(2)
 with col6:
-    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=40000.0, step=500.0)
+    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=8000.0, step=500.0)
 with col7:
     idade_aposentadoria = st.number_input("Idade aposentadoria", min_value=0, max_value=100, value=65)
 
-idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=95)
+idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=90)
 
 # 💸 Renda
 st.markdown("#### 💸 Renda")
 col8, col9 = st.columns(2)
 with col8:
-    previdencia = st.number_input("Previdência", min_value=0.0, value=0.0)
+    previdencia = st.number_input("Previdência", min_value=0.0, value=2000.0)
 with col9:
-    outras_rendas = st.number_input("Aluguel ou outras fontes de renda", min_value=0.0, value=0.0)
+    outras_rendas = st.number_input("Aluguel ou outras fontes de renda", min_value=0.0, value=1000.0)
 
 resgate_necessario = renda_desejada - previdencia - outras_rendas
 
@@ -51,7 +51,7 @@ resgate_necessario = renda_desejada - previdencia - outras_rendas
 st.markdown("#### 🎯 Fim do Patrimônio")
 col10, col11 = st.columns([1, 2])
 with col10:
-    tipo_objetivo = st.selectbox("Patrimônio final", ["manter", "zerar", "outro valor"])
+    tipo_objetivo = st.selectbox("Patrimônio final", ["manter", "zerar", "outro valor"], index=0)
 with col11:
     outro_valor = st.number_input("Se outro valor, qual?", min_value=0.0, value=0.0) if tipo_objetivo == "outro valor" else None
 

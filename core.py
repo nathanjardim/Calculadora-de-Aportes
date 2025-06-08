@@ -1,25 +1,15 @@
 import numpy as np
 
 def taxa_mensal(taxa_anual):
-    if not (0 <= taxa_anual <= 1):
-        raise ValueError("A taxa de juros anual deve estar entre 0 e 1 (ex: 0.08 para 8%).")
-    if taxa_anual > 0.5:
-        raise ValueError("Atenção: taxa de juros anual muito alta (acima de 50%). Revise o input.")
     return (1 + taxa_anual) ** (1 / 12) - 1
 
 def calcular_meses_acc(idade_atual, idade_aposentadoria):
-    if idade_aposentadoria <= idade_atual:
-        raise ValueError("A idade de aposentadoria deve ser maior que a idade atual.")
     return (idade_aposentadoria - idade_atual + 1) * 12
 
 def calcular_meses_cons(idade_aposentadoria, idade_morte):
-    if idade_morte <= idade_aposentadoria:
-        raise ValueError("A idade de morte deve ser maior que a idade de aposentadoria.")
     return (idade_morte - idade_aposentadoria) * 12
 
 def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
-    if not (0 <= imposto <= 1):
-        raise ValueError("A alíquota de imposto de renda deve estar entre 0 e 1 (ex: 0.15 para 15%).")
     total_meses = meses_acc + meses_cons
     cota_bruta = np.cumprod(np.full(total_meses + 1, 1 + taxa))
     if valor_inicial == 0:
@@ -31,11 +21,6 @@ def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
     return cota_bruta, matriz_cotas_liq
 
 def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
-    if valor_aporte < 0 or valor_inicial < 0 or resgate_necessario < 0:
-        raise ValueError("Os valores de aporte, valor inicial e resgate necessário devem ser positivos.")
-    if matriz_cotas_liq.shape[0] != meses_acc + 1:
-        raise ValueError("A matriz de cotas líquidas está incompatível com o tempo de acumulação.")
-
     n_aportes = meses_acc + 1
     patrimonio = np.zeros(n_aportes)
     aportes = np.full(n_aportes, valor_aporte)
@@ -50,8 +35,7 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
     qtd_cotas_aportes = aportes / cota_bruta[:n_aportes]
 
     nova_matriz = matriz_cotas_liq.T
-    patrimonio_mensal = list(patrimonio.copy())  # inclui fase de acumulação
-
+    patrimonio_mensal = list(patrimonio.copy())
     cotas_vivas = qtd_cotas_aportes.copy()
 
     for mes_resgate in range(nova_matriz.shape[0]):
@@ -62,14 +46,12 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
         for i in range(len(cotas_vivas)):
             if resgatado >= resgate_necessario:
                 break
-
             valor_cota = linha_valores[i]
             valor_disponivel = nova_cotas[i] * valor_cota
             restante = resgate_necessario - resgatado
 
             if valor_disponivel >= restante:
-                cotas_usadas = restante / valor_cota
-                nova_cotas[i] -= cotas_usadas
+                nova_cotas[i] -= restante / valor_cota
                 resgatado += restante
             else:
                 resgatado += valor_disponivel
@@ -78,16 +60,10 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
         cotas_vivas = nova_cotas
         patrimonio_mensal.append(np.dot(cotas_vivas, cota_bruta[mes_resgate + n_aportes]))
 
-    # ✅ Correção aplicada aqui:
     patrimonio_mensal = [float(v) if isinstance(v, (int, float, np.number)) else 0.0 for v in patrimonio_mensal]
     return patrimonio_mensal, None
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
-    if tipo_objetivo not in ["manter", "zerar", "outro valor"]:
-        raise ValueError("O tipo de objetivo deve ser: 'manter', 'zerar' ou 'outro valor'.")
-    if tipo_objetivo == "outro valor" and outro_valor is None:
-        raise ValueError("Você deve informar o valor final desejado para o objetivo 'outro valor'.")
-
     x, y = 20.0, 40000.0
     tol = 0.1
     max_iter = 100
@@ -106,6 +82,7 @@ def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_br
                 y = mid
             iter_count += 1
         raise ValueError("Não foi possível encontrar um aporte que satisfaça o objetivo dentro do limite de iterações.")
+
     else:
         alvo = outro_valor if tipo_objetivo == 'outro valor' else resgate_necessario
         while iter_count < max_iter:
@@ -119,3 +96,4 @@ def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_br
                 y = mid
             iter_count += 1
         raise ValueError("Não foi possível encontrar um aporte que satisfaça o objetivo dentro do limite de iterações.")
+

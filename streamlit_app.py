@@ -96,23 +96,22 @@ if submit:
         # 📈 Gráfico interativo com Plotly
         st.subheader("📈 Evolução do patrimônio no tempo")
 
-        anos = [idade_atual + i for i in range(len(patrimonio_bruto) // 12)]
-        patrimonio_anual = [np.mean(patrimonio_bruto[i*12:(i+1)*12]) for i in range(len(anos))]
+        idades_mensais = [idade_atual + i / 12 for i in range(len(patrimonio_bruto))]
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=anos,
-            y=patrimonio_anual,
-            mode="lines+markers",
+            x=idades_mensais,
+            y=patrimonio_bruto,
+            mode="lines",
             name="Evolução do patrimônio",
             line=dict(width=3, color="royalblue"),
-            hovertemplate="Idade: %{x}<br>Patrimônio: R$ %{y:,.2f}<extra></extra>"
+            hovertemplate="Idade: %{x:.1f} anos<br>Patrimônio: R$ %{y:,.2f}<extra></extra>"
         ))
 
         fig.update_layout(
             xaxis_title="Idade (anos)",
             yaxis_title="Patrimônio (R$)",
-            hovermode="x",
+            hovermode="x unified",
             template="plotly_white",
             margin=dict(l=40, r=40, t=30, b=40)
         )

@@ -38,7 +38,7 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
     valor_liquido = []
     qtd_cotas_tempo = []
 
-    for col in nova_matriz:
+    for col_index, col in enumerate(nova_matriz):
         linha_liquida = qtd_cotas_aportes * col
         resgate_liquido = 0
         linha_resgates = np.zeros_like(qtd_cotas_aportes)
@@ -50,7 +50,7 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
             restante = resgate_necessario - resgate_liquido
             if linha_liquida[i] >= restante:
                 linha_resgates[i] = restante
-                cotas_temp[i] -= restante / matriz_cotas_liq[i][np.where(nova_matriz == col)[0][0]]
+                cotas_temp[i] -= restante / matriz_cotas_liq[i][col_index]
                 linha_liquida[i] -= restante
                 resgate_liquido = resgate_necessario
             else:
@@ -65,6 +65,12 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
     valor_liquido = np.array(valor_liquido).T
     cotas_durante_resgates = np.sum(np.array(qtd_cotas_tempo), axis=0)
     cotas_no_tempo = np.concatenate([qtd_cotas_total, cotas_durante_resgates])
+
+    # Corrigir tamanho da cota_bruta caso esteja menor que o necessário
+    if len(cota_bruta) < len(cotas_no_tempo):
+        diff = len(cotas_no_tempo) - len(cota_bruta)
+        cota_bruta = np.append(cota_bruta, [cota_bruta[-1]] * diff)
+
     patrimonio_bruto = cota_bruta[:len(cotas_no_tempo)] * cotas_no_tempo
     patrimonio_liquido = np.sum(valor_liquido, axis=0)
     return patrimonio_bruto, patrimonio_liquido
@@ -101,3 +107,4 @@ def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_br
                 y = mid
             iter_count += 1
         return round(mid, 2)
+

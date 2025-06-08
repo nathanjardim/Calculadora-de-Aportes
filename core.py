@@ -78,8 +78,8 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
         cotas_vivas = nova_cotas
         patrimonio_mensal.append(np.dot(cotas_vivas, cota_bruta[mes_resgate + n_aportes]))
 
-    # 🚫 Evita erro de estrutura irregular no retorno
-    patrimonio_mensal = [float(v) for v in patrimonio_mensal]
+    # ✅ Correção aplicada aqui:
+    patrimonio_mensal = [float(v) if isinstance(v, (int, float, np.number)) else 0.0 for v in patrimonio_mensal]
     return patrimonio_mensal, None
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):

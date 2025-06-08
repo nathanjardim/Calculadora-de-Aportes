@@ -1,16 +1,22 @@
 import streamlit as st
-import pandas as pd
+import matplotlib.pyplot as plt
 from core import (
-    taxa_mensal, calcular_meses_acc, calcular_meses_cons,
-    gerar_cotas, bissecao, calcular_aporte
+    taxa_mensal,
+    calcular_meses_acc,
+    calcular_meses_cons,
+    gerar_cotas,
+    calcular_aporte,
+    bissecao
 )
 
 st.set_page_config(page_title="Wealth Planning", layout="wide")
-st.title("💼 Wealth Planning – Simulador de Aposentadoria")
-st.markdown("Preencha seus dados para descobrir o aporte mensal ideal para atingir seus objetivos.")
+
+st.title("💼 Wealth Planning - Simulador de Aportes para Aposentadoria")
+
+st.markdown("---")
 
 # 📌 Dados Iniciais
-st.markdown("#### 📌 Dados Iniciais")
+st.markdown("### 📌 Dados Iniciais")
 col1, col2, col3 = st.columns(3)
 with col1:
     renda_atual = st.number_input("Renda atual", min_value=0.0, value=9000.0, step=500.0)
@@ -20,7 +26,7 @@ with col3:
     poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=300000.0, step=10000.0)
 
 # 📈 Dados Econômicos
-st.markdown("#### 📈 Dados Econômicos")
+st.markdown("### 📈 Dados Econômicos")
 col4, col5 = st.columns(2)
 with col4:
     taxa_juros_anual = st.number_input("Taxa de juros real (%aa)", min_value=0.0, max_value=100.0, value=6.0) / 100
@@ -28,7 +34,7 @@ with col5:
     imposto_renda = st.number_input("IR (%)", min_value=0.0, max_value=100.0, value=15.0) / 100
 
 # 🧓 Aposentadoria
-st.markdown("#### 🧓 Aposentadoria")
+st.markdown("### 🧓 Aposentadoria")
 col6, col7 = st.columns(2)
 with col6:
     renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=7000.0, step=500.0)
@@ -37,8 +43,8 @@ with col7:
 
 idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=90)
 
-# 💸 Renda
-st.markdown("#### 💸 Renda")
+# 💸 Renda Extra
+st.markdown("### 💸 Renda Extra")
 col8, col9 = st.columns(2)
 with col8:
     previdencia = st.number_input("Previdência", min_value=0.0, value=1500.0)
@@ -48,24 +54,22 @@ with col9:
 resgate_necessario = renda_desejada - previdencia - outras_rendas
 
 # 🎯 Objetivo
-st.markdown("#### 🎯 Fim do Patrimônio")
+st.markdown("### 🎯 Objetivo do Patrimônio Final")
 col10, col11 = st.columns([1, 2])
 with col10:
-    tipo_objetivo = st.selectbox("Patrimônio final", ["manter", "zerar", "outro valor"], index=0)
+    tipo_objetivo = st.selectbox("Deseja manter, zerar ou deixar um valor final?", ["manter", "zerar", "outro valor"], index=0)
 with col11:
     outro_valor = st.number_input("Se outro valor, qual?", min_value=0.0, value=0.0) if tipo_objetivo == "outro valor" else None
 
-# 🚀 Resultado
-st.markdown("### 🚀 Resultado")
-if st.button("Calcular Aporte Ideal"):
+# ▶️ Calcular
+if st.button("Calcular aporte ideal"):
     try:
         taxa = taxa_mensal(taxa_juros_anual)
         meses_acc = calcular_meses_acc(idade_atual, idade_aposentadoria)
         meses_cons = calcular_meses_cons(idade_aposentadoria, idade_fim)
-
         cota_bruta, matriz_cotas_liq = gerar_cotas(taxa, meses_acc, meses_cons, poupanca_atual, imposto_renda)
 
-        aporte = bissecao(
+        aporte_ideal = bissecao(
             tipo_objetivo.lower(),
             outro_valor,
             poupanca_atual,
@@ -76,31 +80,25 @@ if st.button("Calcular Aporte Ideal"):
             resgate_necessario
         )
 
-        patrimonio, _ = calcular_aporte(
-            aporte,
-            poupanca_atual,
-            meses_acc,
-            taxa,
-            cota_bruta,
-            matriz_cotas_liq,
-            resgate_necessario
-        )
+        patrimonio, _ = calcular_aporte(aporte_ideal, poupanca_atual, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario)
 
-        st.success(f"💰 Aportes mensais: R$ {aporte:,.2f}")
-        st.write(f"📦 Poupança necessária: R$ {patrimonio[meses_acc + 1]:,.2f}")
-        st.write(f"🕒 Anos de aportes: {round(meses_acc / 12)}")
-        st.write(f"📊 Percentual da renda atual: {aporte / renda_atual * 100:.2f}%")
+        st.success(f"✅ Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
+        st.write(f"📊 Patrimônio ao se aposentar: R$ {patrimonio[meses_acc]:,.2f}")
+        st.write(f"📈 Patrimônio final aos {idade_fim} anos: R$ {patrimonio[-1]:,.2f}")
 
-        df = pd.DataFrame({
-            "Idade": list(range(idade_atual, idade_atual + len(patrimonio) // 12 + 1)),
-            "Patrimônio": [
-                sum(patrimonio[i*12:(i+1)*12]) / 12
-                for i in range(len(patrimonio) // 12 + 1)
-            ]
-        })
+        # 📉 Gráfico
+        st.markdown("### 📊 Evolução do Patrimônio")
+        anos = list(range(idade_atual, idade_fim + 1))
+        patrimonio_anual = [patrimonio[i * 12] for i in range(len(anos))]
 
-        st.line_chart(df.set_index("Idade"))
-        st.caption("🔵 Projeção anual do patrimônio com base nos aportes definidos.")
+        fig, ax = plt.subplots()
+        ax.plot(anos, patrimonio_anual, marker="o", linestyle="-", linewidth=2)
+        ax.set_xlabel("Idade")
+        ax.set_ylabel("Patrimônio (R$)")
+        ax.set_title("Projeção do Patrimônio ao Longo do Tempo")
+        ax.grid(True)
+        ax.legend(["Patrimônio acumulado"])
+        st.pyplot(fig)
 
     except Exception as e:
-        st.error(f"⚠️ Erro: {str(e)}")
+        st.error(str(e))

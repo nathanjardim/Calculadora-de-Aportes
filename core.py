@@ -14,14 +14,12 @@ def calcular_meses_acc(idade_atual, idade_aposentadoria):
 
 def calcular_meses_cons(idade_aposentadoria, idade_morte):
     if idade_morte <= idade_aposentadoria:
-        raise ValueError("A idade de morte deve ser maior que a de aposentadoria.")
+        raise ValueError("A idade de morte deve ser maior que a idade de aposentadoria.")
     return (idade_morte - idade_aposentadoria) * 12
 
 def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
     if not (0 <= imposto <= 1):
-        raise ValueError("O imposto deve estar entre 0 e 1 (ex: 0.15 para 15%).")
-    if meses_acc == 0:
-        raise ValueError("O período de acumulação não pode ser zero.")
+        raise ValueError("A alíquota de imposto de renda deve estar entre 0 e 1 (ex: 0.15 para 15%).")
     total_meses = meses_acc + meses_cons
     cota_bruta = np.cumprod(np.full(total_meses + 1, 1 + taxa))
     if valor_inicial == 0:
@@ -34,9 +32,9 @@ def gerar_cotas(taxa, meses_acc, meses_cons, valor_inicial, imposto):
 
 def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     if valor_aporte < 0 or valor_inicial < 0 or resgate_necessario < 0:
-        raise ValueError("Valores monetários não podem ser negativos.")
+        raise ValueError("Os valores de aporte, valor inicial e resgate necessário devem ser positivos.")
     if matriz_cotas_liq.shape[0] != meses_acc + 1:
-        raise ValueError("A matriz de cotas líquidas tem um número de linhas incompatível com o período de acumulação.")
+        raise ValueError("A matriz de cotas líquidas está incompatível com o tempo de acumulação.")
 
     n_aportes = meses_acc + 1
     patrimonio = np.zeros(n_aportes)
@@ -52,7 +50,7 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
     qtd_cotas_aportes = aportes / cota_bruta[:n_aportes]
 
     nova_matriz = matriz_cotas_liq.T
-    patrimonio_mensal = list(patrimonio.copy())  # já inclui a fase de acumulação
+    patrimonio_mensal = list(patrimonio.copy())  # inclui fase de acumulação
 
     cotas_vivas = qtd_cotas_aportes.copy()
 
@@ -80,7 +78,7 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
         cotas_vivas = nova_cotas
         patrimonio_mensal.append(np.dot(cotas_vivas, cota_bruta[mes_resgate + n_aportes]))
 
-    return patrimonio_mensal, None
+    return np.array(patrimonio_mensal).flatten().tolist(), None
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     if tipo_objetivo not in ["manter", "zerar", "outro valor"]:

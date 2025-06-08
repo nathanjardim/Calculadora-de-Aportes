@@ -1,0 +1,15 @@
+# Arquivos temporários do Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Configs do sistema
+.DS_Store
+.env
+.venv/
+.idea/
+.vscode/
+
+# Arquivos do Streamlit
+.streamlit/

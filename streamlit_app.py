@@ -13,11 +13,11 @@ st.markdown("Preencha seus dados para descobrir o aporte mensal ideal para ating
 st.markdown("#### 📌 Dados Iniciais")
 col1, col2, col3 = st.columns(3)
 with col1:
-    renda_atual = st.number_input("Renda atual", min_value=0.0, value=10000.0, step=500.0)
+    renda_atual = st.number_input("Renda atual", min_value=0.0, value=9000.0, step=500.0)
 with col2:
     idade_atual = st.number_input("Idade atual", min_value=0, max_value=100, value=30)
 with col3:
-    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=200000.0, step=10000.0)
+    poupanca_atual = st.number_input("Poupança atual", min_value=0.0, value=300000.0, step=10000.0)
 
 # 📈 Dados Econômicos
 st.markdown("#### 📈 Dados Econômicos")
@@ -31,7 +31,7 @@ with col5:
 st.markdown("#### 🧓 Aposentadoria")
 col6, col7 = st.columns(2)
 with col6:
-    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=8000.0, step=500.0)
+    renda_desejada = st.number_input("Renda mensal desejada", min_value=0.0, value=7000.0, step=500.0)
 with col7:
     idade_aposentadoria = st.number_input("Idade aposentadoria", min_value=0, max_value=100, value=65)
 
@@ -41,7 +41,7 @@ idade_fim = st.number_input("Idade fim", min_value=0, max_value=120, value=90)
 st.markdown("#### 💸 Renda")
 col8, col9 = st.columns(2)
 with col8:
-    previdencia = st.number_input("Previdência", min_value=0.0, value=2000.0)
+    previdencia = st.number_input("Previdência", min_value=0.0, value=1500.0)
 with col9:
     outras_rendas = st.number_input("Aluguel ou outras fontes de renda", min_value=0.0, value=1000.0)
 

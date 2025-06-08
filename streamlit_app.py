@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from core import (
     taxa_mensal, calcular_meses_acc, calcular_meses_cons,
     gerar_cotas, calcular_aporte, bissecao
@@ -80,6 +81,31 @@ if submit:
         colr1.metric("Aportes mensais", f"R$ {aporte_ideal:,.2f}")
         colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
+
+        # 📈 Gráfico anual do patrimônio
+        patrimonio, _ = calcular_aporte(
+            aporte_ideal, poupanca_atual, meses_acc, taxa,
+            cota_bruta, matriz_cotas_liq, resgate_necessario
+        )
+
+        anos_total = (idade_morte - idade_atual + 1)
+        lista_anos = [idade_atual + i for i in range(anos_total)]
+        patrimonio_por_ano = []
+
+        for i in range(anos_total):
+            inicio = i * 12
+            fim = min(inicio + 12, len(patrimonio))
+            media_anual = sum(patrimonio[inicio:fim]) / (fim - inicio)
+            patrimonio_por_ano.append(media_anual)
+
+        df = pd.DataFrame({
+            "Ano": lista_anos,
+            "Patrimônio Bruto": patrimonio_por_ano
+        })
+
+        st.subheader("📈 Projeção do Patrimônio ao Longo dos Anos")
+        st.line_chart(df.set_index("Ano"))
+        st.caption(f"🔵 Fase de acumulação: até os {idade_aposentadoria} anos • 🔵 Fase de consumo: até os {idade_morte} anos.")
 
     except ValueError as e:
         erro = str(e)

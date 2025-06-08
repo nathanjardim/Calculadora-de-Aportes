@@ -1,4 +1,7 @@
 import streamlit as st
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import numpy as np
 from core import (
     taxa_mensal, calcular_meses_acc, calcular_meses_cons,
     gerar_cotas, calcular_aporte, bissecao
@@ -80,6 +83,21 @@ if submit:
         colr1.metric("Aportes mensais", f"R$ {aporte_ideal:,.2f}")
         colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
+
+        # 📈 Gráfico de evolução do patrimônio
+        st.subheader("📈 Evolução do patrimônio no tempo")
+
+        anos = [idade_atual + i for i in range(len(cota_bruta) // 12)]
+        patrimonio_anual = [np.mean(cota_bruta[i*12:(i+1)*12]) for i in range(len(anos))]
+
+        fig, ax = plt.subplots()
+        ax.plot(anos, patrimonio_anual, linewidth=2.5, label="Evolução do patrimônio")
+        ax.set_xlabel("Idade (anos)")
+        ax.set_ylabel("Patrimônio (R$)")
+        ax.yaxis.set_major_formatter(mtick.StrMethodFormatter("R$ {x:,.0f}"))
+        ax.grid(True, linestyle="--", alpha=0.4)
+        ax.legend()
+        st.pyplot(fig)
 
     except ValueError as e:
         erro = str(e)

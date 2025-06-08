@@ -1,24 +1,50 @@
-# Simulador de Aposentadoria 📈
+# 💼 Wealth Planning
 
-Este é um aplicativo em Streamlit que calcula o aporte mensal necessário para alcançar um objetivo de aposentadoria com base em parâmetros personalizados.
+Simulador de planejamento de aposentadoria construído com Python + Streamlit.
 
-## Como rodar localmente:
+## 🚀 Como usar
 
-1. Instale as dependências:
-```bash
-pip install -r requirements.txt
+1. Clone este repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/seu-repositorio.git
+   cd seu-repositorio
+   ```
+
+2. Instale as dependências:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Execute o app:
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+
+## 🌐 Publicar no Streamlit Cloud
+
+- Acesse: [https://streamlit.io/cloud](https://streamlit.io/cloud)
+- Faça login com seu GitHub
+- Crie um novo app apontando para este repositório
+- Selecione `streamlit_app.py` como o arquivo principal
+
+## 📁 Estrutura do projeto
+
+```
+calculadora-de-aportes/
+│
+├── core.py                # Lógica de cálculo dos aportes
+├── streamlit_app.py       # Interface do usuário
+├── requirements.txt       # Dependências
+├── README.md              # Este arquivo
+└── .gitignore             # Boas práticas para repositórios
 ```
 
-2. Execute o app:
-```bash
-streamlit run streamlit_app.py
-```
+---
 
-## Como publicar online (Streamlit Cloud):
+## 🛡️ Licença
 
-1. Crie uma conta gratuita em: https://streamlit.io/cloud
-2. Suba este projeto para um repositório no GitHub (ex: `seunome/simulador-aposentadoria`)
-3. No Streamlit Cloud, clique em “New app” e conecte seu GitHub
-4. Escolha o repositório e o arquivo principal: `streamlit_app.py`
-5. Clique em "Deploy" — pronto! O app estará online e acessível por link
+Este projeto é privado e protegido por direitos autorais. Nenhuma cópia, redistribuição ou modificação está autorizada sem permissão do autor.
 
+---
+
+📬 Dúvidas? Fale com o desenvolvedor.

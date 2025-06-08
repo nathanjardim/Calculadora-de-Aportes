@@ -48,7 +48,33 @@ try:
             st.success(f"Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
 
         except ValueError as e:
-            st.error(f"Erro: {str(e)}")
+            erro = str(e)
+            if "idade de aposentadoria" in erro:
+                st.error("⚠️ A idade de aposentadoria deve ser maior do que a sua idade atual.")
+            elif "idade de morte" in erro:
+                st.error("⚠️ A expectativa de vida deve ser maior que a idade de aposentadoria.")
+            elif "imposto" in erro:
+                st.error("⚠️ O campo de imposto deve ser preenchido como porcentagem decimal. Exemplo: 0.15 para 15%.")
+            elif "negativos" in erro:
+                st.error("⚠️ Por favor, preencha todos os valores com números positivos ou zero.")
+            elif "tipo de objetivo" in erro:
+                st.error("⚠️ O objetivo selecionado está inválido. Use: 'manter', 'zerar' ou 'outro valor'.")
+            elif "informar o valor final" in erro:
+                st.error("⚠️ Informe o valor final desejado ao escolher o objetivo 'outro valor'.")
+            elif "matriz de cotas líquidas" in erro:
+                st.error("⚠️ O cálculo interno falhou por um erro técnico. Tente ajustar os dados e tente novamente.")
+            elif "cotas brutas é menor" in erro:
+                st.error("🟥 Os dados informados exigem um valor muito alto ou uma idade de vida muito longa. Tente ajustar a expectativa de vida, renda desejada ou rentabilidade para valores mais realistas.")
+            elif "não foi possível encontrar um aporte" in erro.lower():
+                st.error("⚠️ O sistema não conseguiu calcular um valor de aporte viável com os dados fornecidos. Tente ajustá-los para objetivos mais alcançáveis.")
+            elif "taxa de juros anual" in erro:
+                st.error("⚠️ Digite a taxa de rentabilidade como decimal. Exemplo: 0.08 para 8% ao ano.")
+            elif "muito alta" in erro:
+                st.error("⚠️ A rentabilidade anual está muito alta. Revise esse valor, pois pode não ser realista.")
+            elif "período de acumulação" in erro:
+                st.error("⚠️ Você precisa ter pelo menos 1 ano antes da aposentadoria para acumular investimentos.")
+            else:
+                st.error(f"⚠️ Erro: {erro}")
 
 except Exception as e:
-    st.error(f"Erro inesperado: {str(e)}")
+    st.error(f"⚠️ Erro inesperado: {str(e)}")

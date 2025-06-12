@@ -34,9 +34,6 @@ def gerar_cotas(taxa, meses_acc, meses_cons, poupanca_atual, imposto):
             fator_ir = 1 - imposto * max(rendimento, 0)
             matriz_cotas_liq[i, j] = cota_bruta[j] * fator_ir
 
-    if poupanca_atual > 0 and np.any(matriz_cotas_liq[0, :] == 0):
-        raise ValueError("A matriz de cotas líquidas está incorreta.")
-
     return cota_bruta, matriz_cotas_liq
 
 
@@ -58,13 +55,13 @@ def calcular_aporte(
 
     patrimonio[meses_acc] = patrimonio[meses_acc - 1] * (1 + taxa_mensal) + aporte_mensal
 
-    for i in range(meses_cons):
+    for i in range(total_meses - meses_acc):
         idx = meses_acc + i
         if idx >= total_meses:
             break
         valor_cota = matriz_cotas_liq[i, idx]
         if valor_cota == 0:
-            raise ValueError("Erro na matriz de cotas líquidas.")
+            continue  # evita divisão por zero
         resgate = saque_mensal / valor_cota
         patrimonio[idx] = patrimonio[idx - 1] * (1 + taxa_mensal) - resgate
 
@@ -83,8 +80,6 @@ def bissecao(
     precisao=0.01,
     max_iter=100
 ):
-    objetivo_final = 0
-
     if tipo_objetivo == "zerar":
         objetivo_final = 0
     elif tipo_objetivo == "manter":

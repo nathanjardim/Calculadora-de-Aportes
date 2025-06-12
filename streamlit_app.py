@@ -73,7 +73,7 @@ if submit:
             resgate_necessario
         )
 
-        patrimonio_bruto, _ = calcular_aporte(
+        patrimonio_bruto, patrimonio_liquido = calcular_aporte(
             aporte_ideal,
             poupanca_atual,
             meses_acc,
@@ -93,7 +93,6 @@ if submit:
         colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
-        # 📈 Gráfico interativo com Plotly
         st.subheader("📈 Evolução do patrimônio no tempo")
 
         idades_mensais = [idade_atual + i / 12 for i in range(len(patrimonio_bruto))]
@@ -103,9 +102,17 @@ if submit:
             x=idades_mensais,
             y=patrimonio_bruto,
             mode="lines",
-            name="Evolução do patrimônio",
+            name="Patrimônio Bruto Acumulado",
             line=dict(width=3, color="royalblue"),
-            hovertemplate="Idade: %{x:.1f} anos<br>Patrimônio: R$ %{y:,.2f}<extra></extra>"
+            hovertemplate="Idade: %{x:.1f} anos<br>Bruto: R$ %{y:,.2f}<extra></extra>"
+        ))
+        fig.add_trace(go.Scatter(
+            x=idades_mensais[meses_acc+1:],
+            y=patrimonio_liquido,
+            mode="lines",
+            name="Patrimônio Líquido após Saques",
+            line=dict(width=2, dash="dash", color="darkgreen"),
+            hovertemplate="Idade: %{x:.1f} anos<br>Líquido: R$ %{y:,.2f}<extra></extra>"
         ))
 
         fig.update_layout(

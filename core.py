@@ -28,9 +28,7 @@ def calcular_aporte(valor_aporte, dados, cota_bruta, matriz_cotas_liq, meses_acu
     qtd_cotas_total = [p/c if c != 0 else 0 for p, c in zip(patrimonio, cota_bruta)]
     qtd_cotas_aportes = [a/c if c != 0 else 0 for a, c in zip(aportes, cota_bruta)]
 
-    novo_cota_bruta = cota_bruta[len(qtd_cotas_aportes):]
     nova_matriz = np.array(matriz_cotas_liq).T
-
     valor_liquido2 = []
     matriz_resgates = []
     qtd_cotas_tempo = []

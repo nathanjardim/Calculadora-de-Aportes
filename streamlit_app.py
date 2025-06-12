@@ -58,51 +58,48 @@ if submit:
             "renda_desejada": float(renda_desejada),
             "previdencia": float(previdencia),
             "outras_rendas": float(outras_rendas),
-            "valor_inicial": float(poupanca_atual),
-            "taxa_juros_anual": float(taxa_anual),
-            "imposto_renda": float(imposto),
+            "poupanca_atual": float(poupanca_atual),
+            "taxa_anual": float(taxa_anual),  # <- corrigido aqui
+            "imposto": float(imposto),
             "tipo_objetivo": tipo_objetivo.lower(),
             "outro_valor": float(outro_valor) if outro_valor is not None else 0.0
         }
 
-        resultado = simular(dados)
+        aporte_ideal, patrimonio = simular(dados)
 
-        if isinstance(resultado["aporte_mensal"], str):
-            st.warning(resultado["aporte_mensal"])
-        else:
-            st.success(f"Aporte mensal ideal: R$ {resultado['aporte_mensal']:,.2f}")
+        st.success(f"Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
 
-            total_poupanca = resultado['aporte_mensal'] * ((dados['idade_aposentadoria'] - dados['idade_atual'] + 1) * 12)
-            percentual_renda = (resultado['aporte_mensal'] / renda_atual) * 100
+        total_poupanca = aporte_ideal * ((dados['idade_aposentadoria'] - dados['idade_atual'] + 1) * 12)
+        percentual_renda = (aporte_ideal / renda_atual) * 100
 
-            st.subheader("📘 Resumo do planejamento")
-            colr1, colr2, colr3 = st.columns(3)
-            colr1.metric("Aportes mensais", f"R$ {resultado['aporte_mensal']:,.2f}")
-            colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
-            colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
+        st.subheader("📘 Resumo do planejamento")
+        colr1, colr2, colr3 = st.columns(3)
+        colr1.metric("Aportes mensais", f"R$ {aporte_ideal:,.2f}")
+        colr2.metric("Poupança necessária", f"R$ {total_poupanca:,.2f}")
+        colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
-            st.subheader("📈 Evolução do patrimônio no tempo")
-            idades_mensais = [dados['idade_atual'] + i / 12 for i in range(len(resultado['patrimonio_mensal']))]
+        st.subheader("📈 Evolução do patrimônio no tempo")
+        idades_mensais = [dados['idade_atual'] + i / 12 for i in range(len(patrimonio))]
 
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=idades_mensais,
-                y=resultado['patrimonio_mensal'],
-                mode="lines",
-                name="Evolução do patrimônio",
-                line=dict(width=3, color="royalblue"),
-                hovertemplate="Idade: %{x:.1f} anos<br>Patrimônio: R$ %{y:,.2f}<extra></extra>"
-            ))
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=idades_mensais,
+            y=patrimonio,
+            mode="lines",
+            name="Evolução do patrimônio",
+            line=dict(width=3, color="royalblue"),
+            hovertemplate="Idade: %{x:.1f} anos<br>Patrimônio: R$ %{y:,.2f}<extra></extra>"
+        ))
 
-            fig.update_layout(
-                xaxis_title="Idade (anos)",
-                yaxis_title="Patrimônio (R$)",
-                hovermode="x unified",
-                template="plotly_white",
-                margin=dict(l=40, r=40, t=30, b=40)
-            )
+        fig.update_layout(
+            xaxis_title="Idade (anos)",
+            yaxis_title="Patrimônio (R$)",
+            hovermode="x unified",
+            template="plotly_white",
+            margin=dict(l=40, r=40, t=30, b=40)
+        )
 
-            st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
         st.error(f"⚠️ Erro: {str(e)}")

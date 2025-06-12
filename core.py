@@ -55,12 +55,11 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
 
     nova_matriz = matriz_cotas_liq.T
     cotas_restantes = qtd_cotas_aportes.copy()
-    patrimonio_bruto = list(patrimonio)  # fase de acumulação
-    patrimonio_liquido = []
+    patrimonio_consumo = []
+    patrimonio_liquido_restante = []
 
     for col_index, cotas_liq_coluna in enumerate(nova_matriz):
         resgatado = 0
-        valor_mensal = 0
         for i in range(len(cotas_restantes)):
             if resgatado >= resgate_necessario:
                 break
@@ -76,11 +75,12 @@ def calcular_aporte(valor_aporte, valor_inicial, meses_acc, taxa, cota_bruta, ma
                 cotas_restantes[i] -= needed / valor_unit
                 resgatado = resgate_necessario
 
-        valor_mensal = sum(cotas_restantes * cota_bruta[meses_acc + 1 + col_index])
-        patrimonio_bruto.append(valor_mensal)
-        patrimonio_liquido.append(resgatado)
+        patrimonio_apos_saque = np.sum(cotas_restantes * cota_bruta[meses_acc + 1 + col_index])
+        patrimonio_consumo.append(patrimonio_apos_saque)
+        patrimonio_liquido_restante.append(patrimonio_apos_saque)
 
-    return np.array(patrimonio_bruto), np.array(patrimonio_liquido)
+    patrimonio_total = list(patrimonio) + patrimonio_consumo
+    return np.array(patrimonio_total), np.array(patrimonio_liquido_restante)
 
 def bissecao(tipo_objetivo, outro_valor, valor_inicial, meses_acc, taxa, cota_bruta, matriz_cotas_liq, resgate_necessario):
     if tipo_objetivo not in ["manter", "zerar", "outro valor"]:

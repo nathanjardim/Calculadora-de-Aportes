@@ -1,3 +1,4 @@
+import streamlit as st
 
 st.set_page_config(page_title="Simulador Sow Capital", layout="wide")
 
@@ -19,8 +20,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-
-import streamlit as st
 import pandas as pd
 from core import simular_aposentadoria
 def formatar_montante(valor):

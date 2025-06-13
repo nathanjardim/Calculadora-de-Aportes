@@ -34,7 +34,7 @@ def formatar_montante(valor):
     else:
         return f'R$ {valor:.2f}'
 
-st.set_page_config(page_title="Simulador de Aposentadoria", layout="centered")
+st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 st.title("💼 Simulador de Aposentadoria")
 
 with st.form("form_inputs"):

@@ -9,30 +9,30 @@ st.title("💼 Simulador de Aposentadoria")
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=0, value=70000, step=1000, format="%.0f")
+    renda_atual = st.number_input("Renda atual (R$)", min_value=0, value=70000, step=1000)
     idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, value=42, step=1)
-    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0, value=1_000_000, step=1000, format="%.0f")
+    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0, value=1_000_000, step=1000)
 
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0, max_value=100, value=5, step=1, format="%.0f")
-    imposto_renda_percentual = st.number_input("IR (%)", min_value=0, max_value=100, value=15, step=1, format="%.0f")
+    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0, max_value=100, value=5, step=1)
+    imposto_renda_percentual = st.number_input("IR (%)", min_value=0, max_value=100, value=15, step=1)
     taxa_juros_anual = taxa_juros_percentual / 100
     imposto_renda = imposto_renda_percentual / 100
 
     st.markdown("### 🏁 Aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, value=40000, step=1000, format="%.0f")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, value=40000, step=1000)
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual+1, max_value=100, value=65, step=1)
     idade_morte = st.number_input("Idade fim", min_value=idade_aposentadoria+1, max_value=120, value=95, step=1)
 
     st.markdown("### 💵 Renda")
-    previdencia = st.number_input("Previdência (R$)", min_value=0, value=0, step=100, format="%.0f")
-    outras_rendas = st.number_input("Aluguel ou outras fontes (R$)", min_value=0, value=0, step=100, format="%.0f")
+    previdencia = st.number_input("Previdência (R$)", min_value=0, value=0, step=100)
+    outras_rendas = st.number_input("Aluguel ou outras fontes (R$)", min_value=0, value=0, step=100)
 
     st.markdown("### 🎯 Fim do Patrimônio")
     objetivo = st.selectbox("Objetivo", options=["manter", "zerar", "outro valor"])
     outro_valor = 0
     if objetivo == "outro valor":
-        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, value=5000000, step=10000, format="%.0f")
+        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, value=5000000, step=10000)
 
     submitted = st.form_submit_button("📈 Definir Aportes")
 

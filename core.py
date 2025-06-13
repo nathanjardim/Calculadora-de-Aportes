@@ -100,14 +100,8 @@ def simular_aposentadoria(dados):
         while abs(valor_sup - valor_inf) > 0.01:
             novo_valor = (valor_sup + valor_inf) / 2
             resultado = calcular_aporte(
-                novo_valor,
-                dados,
-                meses_acumulacao,
-                meses_consumo,
-                cota_bruta,
-                matriz_cotas_liq,
-                resgate_necessario,
-                outro_valor
+                novo_valor, dados, meses_acumulacao, meses_consumo,
+                cota_bruta, matriz_cotas_liq, resgate_necessario, outro_valor
             )[0]
 
             tipo = dados['tipo_objetivo']
@@ -126,14 +120,8 @@ def simular_aposentadoria(dados):
 
     aporte_ideal = bissecao(20, 40000)
     _, patrimonio = calcular_aporte(
-        aporte_ideal,
-        dados,
-        meses_acumulacao,
-        meses_consumo,
-        cota_bruta,
-        matriz_cotas_liq,
-        resgate_necessario,
-        outro_valor
+        aporte_ideal, dados, meses_acumulacao, meses_consumo,
+        cota_bruta, matriz_cotas_liq, resgate_necessario, outro_valor
     )
 
-    return round(aporte_ideal, 2), patrimonio
+    return round(aporte_ideal, 2), patrimonio, meses_acumulacao

@@ -1,4 +1,25 @@
 
+st.set_page_config(page_title="Simulador Sow Capital", layout="wide")
+
+st.markdown("""
+    <style>
+    .header {
+        background-color: #123934;
+        padding: 20px 10px;
+        text-align: center;
+    }
+    .header img {
+        max-width: 200px;
+        height: auto;
+    }
+    </style>
+    <div class="header">
+      <img src="https://i.imgur.com/xqkwLt8.png" alt="Logo Sow Capital">
+    </div>
+""", unsafe_allow_html=True)
+
+
+
 import streamlit as st
 import pandas as pd
 from core import simular_aposentadoria

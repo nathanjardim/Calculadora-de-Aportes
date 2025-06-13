@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from core import simular_aposentadoria
 from io import BytesIO
+import altair as alt
 
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="centered")
 st.title("💼 Simulador de Aposentadoria")
@@ -68,18 +69,33 @@ if submitted:
         st.metric("Percentual da renda atual", f"{percentual_renda * 100:.2f}%")
 
         st.markdown("### 📈 Evolução do Patrimônio")
-        st.line_chart(patrimonio)
+
+        df_chart = pd.DataFrame({
+            "Anos de vida": [idade_atual + i // 12 for i in range(len(patrimonio))],
+            "Montante": patrimonio
+        })
+
+        chart = alt.Chart(df_chart).mark_line(point=True).encode(
+            x=alt.X("Anos de vida:O", title="Idade"),
+            y=alt.Y("Montante:Q", title="Montante (R$)", axis=alt.Axis(format=",.0f")),
+            tooltip=[
+                alt.Tooltip("Anos de vida", title="Idade"),
+                alt.Tooltip("Montante", title="Montante", format=",.2f")
+            ]
+        ).properties(width=700, height=400)
+
+        st.altair_chart(chart, use_container_width=True)
 
         st.markdown("### 📤 Exportar dados")
         df_export = pd.DataFrame({
-            "Mês": list(range(len(patrimonio))),
-            "Patrimônio": patrimonio
+            "Ano": df_chart["Anos de vida"],
+            "Patrimônio": df_chart["Montante"]
         })
 
         def gerar_excel():
             output = BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df_export.to_excel(writer, index=False, sheet_name='Simulação')
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                df_export.to_excel(writer, index=False, sheet_name="Simulação")
             output.seek(0)
             return output
 

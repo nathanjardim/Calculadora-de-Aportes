@@ -20,7 +20,6 @@ def calcular_aporte(dados, valor_aporte):
         cota_bruta.append(cota_bruta[-1] * (1 + taxa))
     if dados['valor_inicial'] == 0:
         cota_bruta.insert(0, 1)
-        cota_bruta.pop()
 
     matriz_cotas_liq = []
     for i in range(meses_acumulacao + 1):
@@ -35,7 +34,9 @@ def calcular_aporte(dados, valor_aporte):
     aportes = [dados['valor_inicial']] + [valor_aporte] * meses_acumulacao
     for i in range(1, len(aportes)):
         patrimonio.append(patrimonio[-1] * (1 + taxa) + aportes[i])
-    
+    if patrimonio[1] == 0:
+        patrimonio.pop(0)
+
     qtd_cotas_total = [p / c if c else 0 for p, c in zip(patrimonio, cota_bruta)]
     qtd_cotas_aportes = [a / c if c else 0 for a, c in zip(aportes, cota_bruta)]
 

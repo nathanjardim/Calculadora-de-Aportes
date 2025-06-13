@@ -76,11 +76,11 @@ if submitted:
         })
 
         chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
-            x=alt.X("Anos de vida:O", title="Idade"),
+            x=alt.X("Anos de vida:Q", title="Idade", axis=alt.Axis(format=".0f")),
             y=alt.Y("Montante:Q", title="Montante (R$)", axis=alt.Axis(format=",.0f")),
             tooltip=[
                 alt.Tooltip("Anos de vida", title="Idade", format=".0f"),
-                alt.Tooltip("Montante", title="Montante", format=",.2f")
+                alt.Tooltip("Montante", title="Montante", format="$.2f")
             ]
         ).properties(width=700, height=400)
 

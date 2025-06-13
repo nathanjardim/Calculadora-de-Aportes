@@ -84,6 +84,7 @@ if submitted:
         "tipo_objetivo": objetivo,
         "outro_valor": outro_valor,
     }
+    dados["valor_inicial"] = 0
 
     with st.spinner("Calculando aporte ideal..."):
         aporte, patrimonio = simular_aposentadoria(dados)

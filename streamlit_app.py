@@ -1,6 +1,7 @@
+
 import streamlit as st
 
-st.set_page_config(page_title="Simulador Sow Capital", layout="wide")
+st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 
 st.markdown("""
     <style>
@@ -15,10 +16,9 @@ st.markdown("""
     }
     </style>
     <div class="header">
-      <img src="https://i.imgur.com/xqkwLt8.png" alt="Logo Sow Capital">
+      <img src="https://i.imgur.com/iCRuacp.png" alt="Logo Sow Capital">
     </div>
 """, unsafe_allow_html=True)
-
 
 import pandas as pd
 from core import simular_aposentadoria

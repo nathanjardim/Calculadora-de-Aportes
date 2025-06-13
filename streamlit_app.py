@@ -94,7 +94,7 @@ if submitted:
         st.success(f"💰 Aporte mensal ideal: R$ {aporte:,.2f}")
 
         percentual_renda = aporte / renda_atual if renda_atual else 0
-        poupanca_necessaria = patrimonio[-1] if objetivo == "zerar" else patrimonio[(idade_aposentadoria - idade_atual + 1) * 12 - 1]
+        poupanca_necessaria = patrimonio[(idade_aposentadoria - idade_atual) * 12 - 1]
 
         st.markdown("### 📊 Resultado Resumido")
         st.metric("Aportes mensais", f"R$ {aporte:,.2f}")

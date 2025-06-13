@@ -71,7 +71,7 @@ if submitted:
         st.markdown("### 📈 Evolução do Patrimônio")
 
         df_chart = pd.DataFrame({
-            "Anos de vida": [idade_atual + i // 12 for i in range(len(patrimonio))],
+            "Anos de vida": [idade_atual + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
         })
 
@@ -79,7 +79,7 @@ if submitted:
             x=alt.X("Anos de vida:O", title="Idade"),
             y=alt.Y("Montante:Q", title="Montante (R$)", axis=alt.Axis(format=",.0f")),
             tooltip=[
-                alt.Tooltip("Anos de vida", title="Idade"),
+                alt.Tooltip("Anos de vida", title="Idade", format=".0f"),
                 alt.Tooltip("Montante", title="Montante", format=",.2f")
             ]
         ).properties(width=700, height=400)

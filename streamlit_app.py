@@ -33,6 +33,49 @@ def formatar_montante(valor):
         return f'R$ {valor:.2f}'
 
 
+def validar_inputs(dados, renda_atual):
+    erros = []
+
+    # Idades
+    if dados['idade_aposentadoria'] <= dados['idade_atual']:
+        erros.append("Idade para aposentadoria deve ser maior que idade atual.")
+    if dados['idade_morte'] <= dados['idade_aposentadoria']:
+        erros.append("Idade fim deve ser maior que idade para aposentadoria.")
+    if dados['idade_atual'] < 18 or dados['idade_atual'] > 100:
+        erros.append("Idade atual fora do intervalo permitido (18 a 100 anos).")
+    if dados['idade_aposentadoria'] > 100:
+        erros.append("Idade para aposentadoria deve ser até 100 anos.")
+    if dados['idade_morte'] > 120:
+        erros.append("Idade fim deve ser até 120 anos.")
+
+    # Taxas
+    if dados['taxa_juros_anual'] <= 0:
+        erros.append("Taxa de juros real anual deve ser maior que zero.")
+    if dados['taxa_juros_anual'] > 0.5:
+        erros.append("Taxa de juros real anual muito alta (máximo 50%).")
+    if dados['imposto_renda'] < 0 or dados['imposto_renda'] > 1:
+        erros.append("Imposto de renda deve estar entre 0% e 100%.")
+
+    # Valores financeiros
+    if dados['valor_inicial'] < 0:
+        erros.append("Poupança atual não pode ser negativa.")
+    if dados['renda_desejada'] <= dados['outras_rendas'] + dados['previdencia']:
+        erros.append("Renda desejada deve ser maior que soma de outras rendas e previdência.")
+
+    # Objetivo
+    if dados['tipo_objetivo'] not in ['manter', 'zerar', 'outro valor']:
+        erros.append("Objetivo inválido.")
+
+    # Checagem básica aporte vs renda atual
+    if renda_atual > 0:
+        aporte_max = renda_atual * 10
+        # Podemos aqui sugerir ou validar aporte máximo aceitável se quiser
+    else:
+        erros.append("Renda atual deve ser maior que zero para validação de aporte.")
+
+    return erros
+
+
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0, value=70000, step=1000)
@@ -63,43 +106,26 @@ with st.form("form_inputs"):
     submitted = st.form_submit_button("📈 Definir Aportes")
 
 if submitted:
-    # Validações
-    erros = []
+    dados = {
+        "idade_atual": idade_atual,
+        "idade_aposentadoria": idade_aposentadoria,
+        "idade_morte": idade_morte,
+        "renda_desejada": renda_desejada,
+        "taxa_juros_anual": taxa_juros_anual,
+        "imposto_renda": imposto_renda,
+        "valor_inicial": poupanca_atual,
+        "previdencia": previdencia,
+        "outras_rendas": outras_rendas,
+        "tipo_objetivo": objetivo,
+        "outro_valor": outro_valor,
+    }
 
-    if idade_aposentadoria <= idade_atual:
-        erros.append("Idade para aposentadoria deve ser maior que idade atual.")
-    if idade_morte <= idade_aposentadoria:
-        erros.append("Idade fim deve ser maior que idade para aposentadoria.")
-    if taxa_juros_anual <= 0:
-        erros.append("Taxa de juros real anual deve ser maior que zero.")
-    if not (0 <= imposto_renda <= 1):
-        erros.append("Imposto de renda deve estar entre 0% e 100%.")
-    if poupanca_atual < 0:
-        erros.append("Poupança atual não pode ser negativa.")
-    if objetivo not in ["manter", "zerar", "outro valor"]:
-        erros.append("Objetivo inválido.")
-    if renda_desejada <= (outras_rendas + previdencia):
-        erros.append("Renda desejada deve ser maior que a soma de outras rendas e previdência.")
+    erros = validar_inputs(dados, renda_atual)
 
     if erros:
         for e in erros:
             st.error(e)
     else:
-        dados = {
-            "idade_atual": idade_atual,
-            "idade_aposentadoria": idade_aposentadoria,
-            "idade_morte": idade_morte,
-            "renda_desejada": renda_desejada,
-            "taxa_juros_anual": taxa_juros_anual,
-            "imposto_renda": imposto_renda,
-            "valor_inicial": poupanca_atual,
-            "previdencia": previdencia,
-            "outras_rendas": outras_rendas,
-            "tipo_objetivo": objetivo,
-            "outro_valor": outro_valor,
-        }
-
-        # Tentativa da simulação com timeout máximo na bisseção (no core.py, limite será implementado)
         try:
             aporte, patrimonio, meses_acumulacao = simular_aposentadoria(dados)
         except Exception as ex:

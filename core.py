@@ -1,87 +1,127 @@
+
 import numpy as np
 
-def taxa_mensal(taxa_anual: float) -> float:
-    if taxa_anual <= 0 or taxa_anual > 1:
-        raise ValueError("Taxa de juros anual inválida. Digite como decimal, ex: 0.05 para 5%.")
-    return (1 + taxa_anual) ** (1 / 12) - 1
+def taxa_mensal(taxa_anual):
+    return (1 + taxa_anual)**(1/12) - 1
 
-def calcular_meses_acc(idade_atual: int, idade_aposentadoria: int) -> int:
-    if idade_aposentadoria <= idade_atual:
-        raise ValueError("A idade de aposentadoria deve ser maior que a idade atual.")
-    return (idade_aposentadoria - idade_atual) * 12
+def calcular_meses_acc(dados):
+    return int((dados['idade_aposentadoria'] - dados['idade_atual'] + 1) * 12)
 
-def calcular_meses_cons(idade_aposentadoria: int, idade_fim: int) -> int:
-    if idade_fim <= idade_aposentadoria:
-        raise ValueError("A expectativa de vida deve ser maior que a idade de aposentadoria.")
-    return (idade_fim - idade_aposentadoria) * 12
+def calcular_meses_cons(dados):
+    return int((dados['idade_morte'] - dados['idade_aposentadoria']) * 12)
 
-def gerar_cotas(taxa_mensal: float, meses_acc: int, meses_cons: int, poupanca_atual: float, imposto: float):
-    if poupanca_atual < 0 or imposto < 0 or imposto >= 1:
-        raise ValueError("Valores negativos ou impostos inválidos.")
+def calcular_aporte(dados, valor_aporte):
+    taxa = taxa_mensal(dados['taxa_juros_anual'])
+    meses_acumulacao = calcular_meses_acc(dados)
+    meses_consumo = calcular_meses_cons(dados)
+    resgate_necessario = dados['renda_desejada'] - dados['outras_rendas'] - dados['previdencia']
 
-    cotas_brutas = np.zeros(meses_acc + meses_cons + 1)
-    cotas_brutas[0] = 1.0
-    for i in range(1, len(cotas_brutas)):
-        cotas_brutas[i] = cotas_brutas[i - 1] * (1 + taxa_mensal)
+    cota_bruta = [1]
+    for i in range(meses_acumulacao + meses_consumo):
+        cota_bruta.append(cota_bruta[-1] * (1 + taxa))
+    if dados['valor_inicial'] == 0:
+        cota_bruta.insert(0, 1)
+        cota_bruta.pop()
 
-    matriz_liq = np.zeros((meses_cons, len(cotas_brutas)))
-    for m in range(meses_cons):
-        for a in range(len(cotas_brutas)):
-            if a + m < len(cotas_brutas):
-                bruto = cotas_brutas[a + m] / cotas_brutas[a]
-                liquido = bruto - imposto * (bruto - 1)
-                matriz_liq[m, a] = liquido
+    matriz_cotas_liq = []
+    for i in range(meses_acumulacao + 1):
+        linha = []
+        for j, cota3 in enumerate(cota_bruta[meses_acumulacao+1:]):
+            cota2 = cota_bruta[i]
+            cota_liq = cota3 - (cota3 - cota2) * dados['imposto_renda']
+            linha.append(cota_liq)
+        matriz_cotas_liq.append(linha)
 
-    return cotas_brutas, matriz_liq
+    patrimonio = [dados['valor_inicial']] if dados['valor_inicial'] != 0 else [0]
+    aportes = [dados['valor_inicial']] + [valor_aporte] * meses_acumulacao
+    for i in range(1, len(aportes)):
+        patrimonio.append(patrimonio[-1] * (1 + taxa) + aportes[i])
+    if patrimonio[1] == 0:
+        patrimonio.pop(0)
 
-def calcular_aporte(aporte: float, poupanca_inicial: float, meses_acc: int, taxa_mensal: float,
-                    cotas_brutas: np.ndarray, matriz_liq: np.ndarray, resgate_mensal: float):
+    qtd_cotas_total = [p / c if c else 0 for p, c in zip(patrimonio, cota_bruta)]
+    qtd_cotas_aportes = [a / c if c else 0 for a, c in zip(aportes, cota_bruta)]
 
-    total_cotas = poupanca_inicial / cotas_brutas[0]
-    cotas_acumuladas = [total_cotas]
-    patrimonio_bruto = [total_cotas * cotas_brutas[0]]
+    nova_matriz = np.array(matriz_cotas_liq).T
+    valor_liquido2 = []
+    matriz_resgates = []
+    qtd_cotas_tempo = []
 
-    for i in range(1, meses_acc + 1):
-        total_cotas += aporte / cotas_brutas[i]
-        cotas_acumuladas.append(total_cotas)
-        patrimonio_bruto.append(total_cotas * cotas_brutas[i])
+    for col in range(nova_matriz.shape[0]):
+        linha_liquida = [float(a * nova_matriz[col, i]) for i, a in enumerate(qtd_cotas_aportes)]
+        resgate_liquido = 0
+        linha_resgates = []
 
-    cotas_resgate = []
-    for m in range(matriz_liq.shape[0]):
-        cotas_necessarias = resgate_mensal / matriz_liq[m, meses_acc + m]
-        total_cotas -= cotas_necessarias
-        cotas_resgate.append(cotas_necessarias)
-        patrimonio_bruto.append(total_cotas * cotas_brutas[meses_acc + m])
+        for i, valor in enumerate(linha_liquida):
+            if resgate_necessario == resgate_liquido:
+                linha_resgates.append(0)
+            elif valor > 0 and valor >= resgate_necessario - resgate_liquido:
+                delta = resgate_necessario - resgate_liquido
+                linha_liquida[i] -= delta
+                qtd_cotas_aportes[i] -= delta / matriz_cotas_liq[i][col]
+                linha_resgates.append(delta)
+                resgate_liquido += delta
+            elif valor > 0:
+                resgate_liquido += valor
+                linha_resgates.append(valor)
+                linha_liquida[i] = 0
+                qtd_cotas_aportes[i] = 0
+            else:
+                linha_resgates.append(0)
 
-    return patrimonio_bruto, cotas_resgate
+        qtd_cotas_tempo.append(qtd_cotas_aportes.copy())
+        valor_liquido2.append(linha_liquida)
+        matriz_resgates.append(linha_resgates)
 
-def bissecao(tipo_objetivo: str, outro_valor: float, poupanca_inicial: float, meses_acc: int,
-             taxa_mensal: float, cotas_brutas: np.ndarray, matriz_liq: np.ndarray, resgate_mensal: float,
-             tolerancia: float = 0.01, max_iter: int = 100):
+    valor_liquido = np.array(valor_liquido2).T
+    patrimonio_liquido = [sum(valor_liquido[:, i]) for i in range(valor_liquido.shape[1])]
+    cotas_durante_resgates = list(np.sum(np.array(qtd_cotas_tempo).T, axis=0))
+    cotas_no_tempo = qtd_cotas_total + cotas_durante_resgates
+    patrimonio_bruto = [a * b for a, b in zip(cota_bruta, cotas_no_tempo)]
 
-    if tipo_objetivo == "manter":
-        valor_final_desejado = poupanca_inicial * (1 + taxa_mensal) ** (meses_acc + matriz_liq.shape[0])
-    elif tipo_objetivo == "zerar":
-        valor_final_desejado = 0
-    elif tipo_objetivo == "outro valor":
-        if outro_valor is None or outro_valor < 0:
-            raise ValueError("Você deve informar o valor final desejado ao escolher 'outro valor'.")
-        valor_final_desejado = outro_valor
+    if dados['tipo_objetivo'] == 'manter':
+        funcao_objetivo = patrimonio_bruto[-1] - patrimonio_bruto[len(aportes)]
+    elif dados['tipo_objetivo'] == 'zerar':
+        funcao_objetivo = patrimonio_liquido[-2]
     else:
-        raise ValueError("Tipo de objetivo inválido.")
+        funcao_objetivo = patrimonio_bruto[-1]
 
-    a, b = 0, 1_000_000
-    for _ in range(max_iter):
-        m = (a + b) / 2
-        patrimonio_final, _ = calcular_aporte(
-            m, poupanca_inicial, meses_acc, taxa_mensal, cotas_brutas, matriz_liq, resgate_mensal
-        )
-        diferenca = patrimonio_final[-1] - valor_final_desejado
-        if abs(diferenca) < tolerancia:
-            return m
-        if diferenca > 0:
-            b = m
+    return funcao_objetivo, patrimonio_bruto
+
+def bissecao(dados, x, y):
+    while abs(calcular_aporte(dados, x)[0] - calcular_aporte(dados, y)[0]) > 0.1:
+        novo_valor = abs(x + y) / 2
+        # critério de parada removido para garantir convergência
+        if calcular_aporte(dados, novo_valor)[0] < 0:
+            x = novo_valor
         else:
-            a = m
+            y = novo_valor
+    return novo_valor
 
-    raise ValueError("Não foi possível encontrar um aporte adequado dentro da precisão estabelecida.")
+def bissecao2(dados, x, y):
+    if dados['tipo_objetivo'] == 'zerar':
+        objetivo = dados['renda_desejada'] - dados['outras_rendas'] - dados['previdencia']
+    else:
+        objetivo = dados['outro_valor']
+
+    while abs(calcular_aporte(dados, x)[0] - objetivo) > 0.01:
+        novo_valor = abs(x + y) / 2
+        # critério de parada removido para garantir convergência
+        if calcular_aporte(dados, novo_valor)[0] < objetivo:
+            x = novo_valor
+        else:
+            y = novo_valor
+    return novo_valor
+
+def simular_aposentadoria(dados):
+    if dados['tipo_objetivo'] == 'manter':
+        aporte = bissecao(dados, 20, 40000)
+    else:
+        aporte = bissecao2(dados, 20, 40000)
+    if aporte is None:
+        return None, []
+    if isinstance(aporte, str):
+        return aporte, []
+    dados['aporte_encontrado'] = round(aporte, 2)
+    patrimonio = calcular_aporte(dados, aporte)[1]
+    return round(aporte, 2), patrimonio

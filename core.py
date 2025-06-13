@@ -1,4 +1,3 @@
-
 import numpy as np
 
 def taxa_mensal(taxa_anual):
@@ -17,7 +16,7 @@ def calcular_aporte(dados, valor_aporte):
     resgate_necessario = dados['renda_desejada'] - dados['outras_rendas'] - dados['previdencia']
 
     cota_bruta = [1]
-    for i in range(meses_acumulacao + meses_consumo):
+    for _ in range(meses_acumulacao + meses_consumo):
         cota_bruta.append(cota_bruta[-1] * (1 + taxa))
     if dados['valor_inicial'] == 0:
         cota_bruta.insert(0, 1)
@@ -91,7 +90,6 @@ def calcular_aporte(dados, valor_aporte):
 def bissecao(dados, x, y):
     while abs(calcular_aporte(dados, x)[0] - calcular_aporte(dados, y)[0]) > 0.1:
         novo_valor = abs(x + y) / 2
-        # critério de parada removido para garantir convergência
         if calcular_aporte(dados, novo_valor)[0] < 0:
             x = novo_valor
         else:
@@ -106,7 +104,6 @@ def bissecao2(dados, x, y):
 
     while abs(calcular_aporte(dados, x)[0] - objetivo) > 0.01:
         novo_valor = abs(x + y) / 2
-        # critério de parada removido para garantir convergência
         if calcular_aporte(dados, novo_valor)[0] < objetivo:
             x = novo_valor
         else:

@@ -1,5 +1,5 @@
-
 import streamlit as st
+
 
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 
@@ -22,6 +22,10 @@ st.markdown("""
 
 import pandas as pd
 from core import simular_aposentadoria
+from io import BytesIO
+import altair as alt
+
+
 def formatar_montante(valor):
     if valor >= 1_000_000:
         return f'R$ {valor / 1_000_000:.2f}M'
@@ -29,8 +33,6 @@ def formatar_montante(valor):
         return f'R$ {valor / 1_000:.2f}K'
     else:
         return f'R$ {valor:.2f}'
-from io import BytesIO
-import altair as alt
 
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="centered")
 st.title("💼 Simulador de Aposentadoria")

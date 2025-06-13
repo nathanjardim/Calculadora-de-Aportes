@@ -1,6 +1,9 @@
 import streamlit as st
 import plotly.graph_objects as go
-from core import simular
+from core import (
+    taxa_mensal, calcular_meses_acc, calcular_meses_cons,
+    gerar_cotas, calcular_aporte, bissecao
+)
 
 st.set_page_config(page_title="Wealth Planning", layout="centered")
 st.title("📊 Wealth Planning")
@@ -51,25 +54,36 @@ with st.form("formulario"):
 
 if submit:
     try:
-        dados = {
-            "idade_atual": int(idade_atual),
-            "idade_aposentadoria": int(idade_aposentadoria),
-            "idade_morte": int(idade_morte),
-            "renda_desejada": float(renda_desejada),
-            "previdencia": float(previdencia),
-            "outras_rendas": float(outras_rendas),
-            "poupanca_atual": float(poupanca_atual),
-            "taxa_anual": float(taxa_anual),  # <- corrigido aqui
-            "imposto": float(imposto),
-            "tipo_objetivo": tipo_objetivo.lower(),
-            "outro_valor": float(outro_valor) if outro_valor is not None else 0.0
-        }
+        taxa = taxa_mensal(taxa_anual)
+        meses_acc = calcular_meses_acc(idade_atual, idade_aposentadoria)
+        meses_cons = calcular_meses_cons(idade_aposentadoria, idade_morte)
+        resgate_necessario = renda_desejada - outras_rendas - previdencia
 
-        aporte_ideal, patrimonio = simular(dados)
+        cota_bruta, matriz_cotas_liq = gerar_cotas(taxa, meses_acc, meses_cons, poupanca_atual, imposto)
+
+        aporte_ideal = bissecao(
+            tipo_objetivo.lower(),
+            outro_valor,
+            poupanca_atual,
+            meses_acc,
+            taxa,
+            cota_bruta,
+            matriz_cotas_liq,
+            resgate_necessario
+        )
+
+        patrimonio_bruto, _ = calcular_aporte(
+            aporte_ideal,
+            poupanca_atual,
+            meses_acc,
+            taxa,
+            cota_bruta,
+            matriz_cotas_liq,
+            resgate_necessario
+        )
 
         st.success(f"Aporte mensal ideal: R$ {aporte_ideal:,.2f}")
-
-        total_poupanca = aporte_ideal * ((dados['idade_aposentadoria'] - dados['idade_atual'] + 1) * 12)
+        total_poupanca = aporte_ideal * meses_acc
         percentual_renda = (aporte_ideal / renda_atual) * 100
 
         st.subheader("📘 Resumo do planejamento")
@@ -79,12 +93,12 @@ if submit:
         colr3.metric("Percentual da renda atual", f"{percentual_renda:.2f}%")
 
         st.subheader("📈 Evolução do patrimônio no tempo")
-        idades_mensais = [dados['idade_atual'] + i / 12 for i in range(len(patrimonio))]
+        idades_mensais = [idade_atual + i / 12 for i in range(len(patrimonio_bruto))]
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=idades_mensais,
-            y=patrimonio,
+            y=patrimonio_bruto,
             mode="lines",
             name="Evolução do patrimônio",
             line=dict(width=3, color="royalblue"),
@@ -101,5 +115,31 @@ if submit:
 
         st.plotly_chart(fig, use_container_width=True)
 
-    except Exception as e:
-        st.error(f"⚠️ Erro: {str(e)}")
+    except ValueError as e:
+        erro = str(e)
+        if "idade de aposentadoria" in erro:
+            st.error("⚠️ A idade de aposentadoria deve ser maior do que a sua idade atual.")
+        elif "idade de morte" in erro:
+            st.error("⚠️ A expectativa de vida deve ser maior que a idade de aposentadoria.")
+        elif "imposto" in erro:
+            st.error("⚠️ O campo de imposto deve ser preenchido como porcentagem decimal. Exemplo: 0.15 para 15%.")
+        elif "negativos" in erro:
+            st.error("⚠️ Por favor, preencha todos os valores com números positivos ou zero.")
+        elif "tipo de objetivo" in erro:
+            st.error("⚠️ O objetivo selecionado está inválido. Use: 'manter', 'zerar' ou 'outro valor'.")
+        elif "informar o valor final" in erro:
+            st.error("⚠️ Informe o valor final desejado ao escolher o objetivo 'outro valor'.")
+        elif "matriz de cotas líquidas" in erro:
+            st.error("⚠️ O cálculo interno falhou por um erro técnico. Tente ajustar os dados e tente novamente.")
+        elif "cotas brutas é menor" in erro:
+            st.error("🟥 Os dados informados exigem um valor muito alto ou uma idade de vida muito longa. Tente ajustar a expectativa de vida, renda desejada ou rentabilidade para valores mais realistas.")
+        elif "não foi possível encontrar um aporte" in erro.lower():
+            st.error("⚠️ O sistema não conseguiu calcular um valor de aporte viável com os dados fornecidos. Tente ajustá-los para objetivos mais alcançáveis.")
+        elif "taxa de juros anual" in erro:
+            st.error("⚠️ Digite a taxa de rentabilidade como decimal. Exemplo: 0.08 para 8% ao ano.")
+        elif "muito alta" in erro:
+            st.error("⚠️ A rentabilidade anual está muito alta. Revise esse valor, pois pode não ser realista.")
+        elif "período de acumulação" in erro:
+            st.error("⚠️ Você precisa ter pelo menos 1 ano antes da aposentadoria para acumular investimentos.")
+        else:
+            st.error(f"⚠️ Erro: {erro}")

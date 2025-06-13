@@ -2,6 +2,13 @@
 import streamlit as st
 import pandas as pd
 from core import simular_aposentadoria
+def formatar_montante(valor):
+    if valor >= 1_000_000:
+        return f'R$ {valor / 1_000_000:.2f}M'
+    elif valor >= 1_000:
+        return f'R$ {valor / 1_000:.2f}K'
+    else:
+        return f'R$ {valor:.2f}'
 from io import BytesIO
 import altair as alt
 
@@ -74,13 +81,14 @@ if submitted:
             "Anos de vida": [idade_atual + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
         })
+        df_chart["Montante formatado"] = df_chart["Montante"].apply(formatar_montante)
 
         chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
             x=alt.X("Anos de vida:Q", title="Idade", axis=alt.Axis(format=".0f")),
             y=alt.Y("Montante:Q", title="Montante (R$)", axis=alt.Axis(format=",.0f")),
             tooltip=[
                 alt.Tooltip("Anos de vida", title="Idade", format=".0f"),
-                alt.Tooltip("Montante", title="Montante", format="$.2f")
+                alt.Tooltip("Montante formatado", title="Montante")
             ]
         ).properties(width=700, height=400)
 

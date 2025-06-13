@@ -1,8 +1,6 @@
 import streamlit as st
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 
-
-
 st.markdown("""
     <style>
     .header {
@@ -25,7 +23,6 @@ from core import simular_aposentadoria
 from io import BytesIO
 import altair as alt
 
-
 def formatar_montante(valor):
     if valor >= 1_000_000:
         return f'R$ {valor / 1_000_000:.2f}M'
@@ -40,7 +37,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0, value=70000, step=1000)
@@ -53,7 +49,7 @@ with st.form("form_inputs"):
     taxa_juros_anual = taxa_juros_percentual / 100
     imposto_renda = imposto_renda_percentual / 100
 
-    st.markdown("### 🏁 Aposentadoria")
+    st.markdown("### 🌟 Aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, value=40000, step=1000)
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual+1, max_value=100, value=65, step=1)
     idade_morte = st.number_input("Idade fim", min_value=idade_aposentadoria+1, max_value=120, value=95, step=1)
@@ -82,10 +78,8 @@ if submitted:
         "previdencia": previdencia,
         "outras_rendas": outras_rendas,
         "tipo_objetivo": objetivo,
-        "outro_valor": outro_valor,
+        "outro_valor": outro_valor
     }
-    dados["valor_inicial"] = 0
-    dados["poupanca_atual"] = 0
 
     with st.spinner("Calculando aporte ideal..."):
         aporte, patrimonio = simular_aposentadoria(dados)
@@ -96,7 +90,8 @@ if submitted:
         st.success(f"💰 Aporte mensal ideal: R$ {aporte:,.2f}")
 
         percentual_renda = aporte / renda_atual if renda_atual else 0
-        poupanca_necessaria = patrimonio[(idade_aposentadoria - idade_atual) * 12 - 1]
+        meses_acumulacao = (idade_aposentadoria - idade_atual + 1) * 12
+        poupanca_necessaria = patrimonio[meses_acumulacao - 1]  # valor acumulado ao aposentar
 
         st.markdown("### 📊 Resultado Resumido")
         st.metric("Aportes mensais", f"R$ {aporte:,.2f}")
@@ -122,7 +117,7 @@ if submitted:
 
         st.altair_chart(chart, use_container_width=True)
 
-        st.markdown("### 📤 Exportar dados")
+        st.markdown("### 📄 Exportar dados")
         df_export = pd.DataFrame({
             "Ano": df_chart["Anos de vida"],
             "Patrimônio": df_chart["Montante"]
@@ -136,7 +131,7 @@ if submitted:
             return output
 
         st.download_button(
-            label="📥 Baixar Excel",
+            label="📅 Baixar Excel",
             data=gerar_excel(),
             file_name="simulacao_aposentadoria.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

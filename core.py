@@ -4,7 +4,7 @@ def taxa_mensal(taxa_anual):
     return (1 + taxa_anual)**(1/12) - 1
 
 def calcular_meses_acc(dados):
-    return int((dados['idade_aposentadoria'] - dados['idade_atual'] + 1) * 12)
+    return int((dados['idade_aposentadoria'] - dados['idade_atual']) * 12)
 
 def calcular_meses_cons(dados):
     return int((dados['idade_morte'] - dados['idade_aposentadoria']) * 12)

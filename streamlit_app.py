@@ -34,7 +34,7 @@ def formatar_montante(valor):
     else:
         return f'R$ {valor:.2f}'
 
-st.title("Wealth Planning")
+st.markdown("<h1 style='text-align: center;'>Wealth Planning</h1>", unsafe_allow_html=True)
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")

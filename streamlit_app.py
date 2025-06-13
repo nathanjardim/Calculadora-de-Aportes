@@ -5,40 +5,34 @@ from core import simular_aposentadoria
 from io import BytesIO
 
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="centered")
-
 st.title("💼 Simulador de Aposentadoria")
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
-    col1, col2 = st.columns(2)
-    with col1:
-        idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, value=42)
-        renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, value=70000.0, step=1000.0)
-        poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0.0, value=1_000_000.0, step=1000.0)
-    with col2:
-        idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual+1, max_value=100, value=65)
-        idade_morte = st.number_input("Idade esperada de vida", min_value=idade_aposentadoria+1, max_value=120, value=95)
+    renda_atual = st.number_input("Renda atual (R$)", min_value=0, value=70000, step=1000, format="%.0f")
+    idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, value=42, step=1)
+    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0, value=1_000_000, step=1000, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
-    col3, col4 = st.columns(2)
-    with col3:
-        taxa_juros_anual = st.number_input("Taxa real de juros anual (%)", min_value=0.0, max_value=1.0, value=0.05, step=0.005)
-    with col4:
-        imposto_renda = st.number_input("Imposto sobre rendimento (%)", min_value=0.0, max_value=1.0, value=0.15, step=0.01)
+    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0, max_value=100, value=5, step=1, format="%.0f")
+    imposto_renda_percentual = st.number_input("IR (%)", min_value=0, max_value=100, value=15, step=1, format="%.0f")
+    taxa_juros_anual = taxa_juros_percentual / 100
+    imposto_renda = imposto_renda_percentual / 100
 
-    st.markdown("### 💵 Renda na Aposentadoria")
-    col5, col6 = st.columns(2)
-    with col5:
-        renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, value=40000.0)
-    with col6:
-        previdencia = st.number_input("Previdência (R$)", min_value=0.0, value=0.0)
-        outras_rendas = st.number_input("Outras rendas mensais (R$)", min_value=0.0, value=0.0)
+    st.markdown("### 🏁 Aposentadoria")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, value=40000, step=1000, format="%.0f")
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual+1, max_value=100, value=65, step=1)
+    idade_morte = st.number_input("Idade fim", min_value=idade_aposentadoria+1, max_value=120, value=95, step=1)
 
-    st.markdown("### 🎯 Objetivo Final")
-    objetivo = st.selectbox("O que deseja ao final da vida?", options=["manter", "zerar", "outro valor"])
-    outro_valor = 0.0
+    st.markdown("### 💵 Renda")
+    previdencia = st.number_input("Previdência (R$)", min_value=0, value=0, step=100, format="%.0f")
+    outras_rendas = st.number_input("Aluguel ou outras fontes (R$)", min_value=0, value=0, step=100, format="%.0f")
+
+    st.markdown("### 🎯 Fim do Patrimônio")
+    objetivo = st.selectbox("Objetivo", options=["manter", "zerar", "outro valor"])
+    outro_valor = 0
     if objetivo == "outro valor":
-        outro_valor = st.number_input("Valor final desejado (R$)", min_value=0.0, value=5_000_000.0)
+        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, value=5000000, step=10000, format="%.0f")
 
     submitted = st.form_submit_button("📈 Definir Aportes")
 
@@ -65,14 +59,13 @@ if submitted:
     else:
         st.success(f"💰 Aporte mensal ideal: R$ {aporte:,.2f}")
 
-        poupanca_necessaria = patrimonio[len(patrimonio) if objetivo == "zerar" else len(range((idade_aposentadoria - idade_atual + 1) * 12))]
         percentual_renda = aporte / renda_atual if renda_atual else 0
+        poupanca_necessaria = patrimonio[len(patrimonio) if objetivo == "zerar" else len(range((idade_aposentadoria - idade_atual + 1) * 12))]
 
         st.markdown("### 📊 Resultado Resumido")
-        col7, col8, col9 = st.columns(3)
-        col7.metric("Aportes mensais", f"R$ {aporte:,.2f}")
-        col8.metric("Poupança necessária", f"R$ {poupanca_necessaria:,.2f}")
-        col9.metric("Percentual da renda atual", f"{percentual_renda*100:.2f}%")
+        st.metric("Aportes mensais", f"R$ {aporte:,.2f}")
+        st.metric("Poupança necessária", f"R$ {poupanca_necessaria:,.2f}")
+        st.metric("Percentual da renda atual", f"{percentual_renda * 100:.2f}%")
 
         st.markdown("### 📈 Evolução do Patrimônio")
         st.line_chart(patrimonio)

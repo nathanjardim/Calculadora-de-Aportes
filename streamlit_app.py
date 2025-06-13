@@ -32,12 +32,6 @@ def formatar_montante(valor):
     else:
         return f'R$ {valor:.2f}'
 
-st.markdown("""
-    <div style='text-align: center; padding: 10px 0'>
-        <h1 style='font-size: 3.5em; font-weight: bold;'>Wealth Planning</h1>
-    </div>
-""", unsafe_allow_html=True)
-
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
@@ -69,71 +63,93 @@ with st.form("form_inputs"):
     submitted = st.form_submit_button("📈 Definir Aportes")
 
 if submitted:
-    dados = {
-        "idade_atual": idade_atual,
-        "idade_aposentadoria": idade_aposentadoria,
-        "idade_morte": idade_morte,
-        "renda_desejada": renda_desejada,
-        "taxa_juros_anual": taxa_juros_anual,
-        "imposto_renda": imposto_renda,
-        "valor_inicial": poupanca_atual,
-        "previdencia": previdencia,
-        "outras_rendas": outras_rendas,
-        "tipo_objetivo": objetivo,
-        "outro_valor": outro_valor,
-    }
+    # Validações
+    erros = []
 
-    with st.spinner("Calculando aporte ideal..."):
-        aporte, patrimonio, meses_acumulacao = simular_aposentadoria(dados)
+    if idade_aposentadoria <= idade_atual:
+        erros.append("Idade para aposentadoria deve ser maior que idade atual.")
+    if idade_morte <= idade_aposentadoria:
+        erros.append("Idade fim deve ser maior que idade para aposentadoria.")
+    if taxa_juros_anual <= 0:
+        erros.append("Taxa de juros real anual deve ser maior que zero.")
+    if not (0 <= imposto_renda <= 1):
+        erros.append("Imposto de renda deve estar entre 0% e 100%.")
+    if poupanca_atual < 0:
+        erros.append("Poupança atual não pode ser negativa.")
+    if objetivo not in ["manter", "zerar", "outro valor"]:
+        erros.append("Objetivo inválido.")
+    if renda_desejada <= (outras_rendas + previdencia):
+        erros.append("Renda desejada deve ser maior que a soma de outras rendas e previdência.")
 
-    if isinstance(aporte, str):
-        st.error(aporte)
+    if erros:
+        for e in erros:
+            st.error(e)
     else:
-        st.success(f"💰 Aporte mensal ideal: R$ {aporte:,.2f}")
+        dados = {
+            "idade_atual": idade_atual,
+            "idade_aposentadoria": idade_aposentadoria,
+            "idade_morte": idade_morte,
+            "renda_desejada": renda_desejada,
+            "taxa_juros_anual": taxa_juros_anual,
+            "imposto_renda": imposto_renda,
+            "valor_inicial": poupanca_atual,
+            "previdencia": previdencia,
+            "outras_rendas": outras_rendas,
+            "tipo_objetivo": objetivo,
+            "outro_valor": outro_valor,
+        }
 
-        percentual_renda = aporte / renda_atual if renda_atual else 0
-        poupanca_necessaria = patrimonio[meses_acumulacao + 1]
+        # Tentativa da simulação com timeout máximo na bisseção (no core.py, limite será implementado)
+        try:
+            aporte, patrimonio, meses_acumulacao = simular_aposentadoria(dados)
+        except Exception as ex:
+            st.error(f"Erro na simulação: {ex}")
+        else:
+            percentual_renda = aporte / renda_atual if renda_atual else 0
+            poupanca_necessaria = patrimonio[meses_acumulacao + 1]
 
-        st.markdown("### 📊 Resultado Resumido")
-        st.metric("Aportes mensais", f"R$ {aporte:,.2f}")
-        st.metric("Poupança necessária", f"R$ {poupanca_necessaria:,.2f}")
-        st.metric("Percentual da renda atual", f"{percentual_renda * 100:.2f}%")
+            st.success(f"💰 Aporte mensal ideal: R$ {aporte:,.2f}")
 
-        st.markdown("### 📈 Evolução do Patrimônio")
+            st.markdown("### 📊 Resultado Resumido")
+            st.metric("Aportes mensais", f"R$ {aporte:,.2f}")
+            st.metric("Poupança necessária", f"R$ {poupanca_necessaria:,.2f}")
+            st.metric("Percentual da renda atual", f"{percentual_renda * 100:.2f}%")
 
-        df_chart = pd.DataFrame({
-            "Anos de vida": [idade_atual + i / 12 for i in range(len(patrimonio))],
-            "Montante": patrimonio
-        })
-        df_chart["Montante formatado"] = df_chart["Montante"].apply(formatar_montante)
+            st.markdown("### 📈 Evolução do Patrimônio")
 
-        chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
-            x=alt.X("Anos de vida:Q", title="Idade", axis=alt.Axis(format=".0f")),
-            y=alt.Y("Montante:Q", title=None, axis=alt.Axis(format=".2s")),
-            tooltip=[
-                alt.Tooltip("Anos de vida", title="Idade", format=".0f"),
-                alt.Tooltip("Montante formatado", title="Montante")
-            ]
-        ).properties(width=700, height=400)
+            df_chart = pd.DataFrame({
+                "Anos de vida": [idade_atual + i / 12 for i in range(len(patrimonio))],
+                "Montante": patrimonio
+            })
+            df_chart["Montante formatado"] = df_chart["Montante"].apply(formatar_montante)
 
-        st.altair_chart(chart, use_container_width=True)
+            chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
+                x=alt.X("Anos de vida:Q", title="Idade", axis=alt.Axis(format=".0f")),
+                y=alt.Y("Montante:Q", title=None, axis=alt.Axis(format=".2s")),
+                tooltip=[
+                    alt.Tooltip("Anos de vida", title="Idade", format=".0f"),
+                    alt.Tooltip("Montante formatado", title="Montante")
+                ]
+            ).properties(width=700, height=400)
 
-        st.markdown("### 📤 Exportar dados")
-        df_export = pd.DataFrame({
-            "Ano": df_chart["Anos de vida"],
-            "Patrimônio": df_chart["Montante"]
-        })
+            st.altair_chart(chart, use_container_width=True)
 
-        def gerar_excel():
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df_export.to_excel(writer, index=False, sheet_name="Simulação")
-            output.seek(0)
-            return output
+            st.markdown("### 📤 Exportar dados")
+            df_export = pd.DataFrame({
+                "Ano": df_chart["Anos de vida"],
+                "Patrimônio": df_chart["Montante"]
+            })
 
-        st.download_button(
-            label="📥 Baixar Excel",
-            data=gerar_excel(),
-            file_name="simulacao_aposentadoria.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            def gerar_excel():
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                    df_export.to_excel(writer, index=False, sheet_name="Simulação")
+                output.seek(0)
+                return output
+
+            st.download_button(
+                label="📥 Baixar Excel",
+                data=gerar_excel(),
+                file_name="simulacao_aposentadoria.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )

@@ -1,8 +1,30 @@
+import streamlit as st
+import pandas as pd
+from core import calcular_aporte
+from io import BytesIO
+import altair as alt
+
+st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
+
+st.markdown("""
+    <style>
+    .header {
+        background-color: #123934;
+        padding: 20px 10px;
+        text-align: center;
+    }
+    .header img {
+        max-width: 200px;
+        height: auto;
+    }
+    </style>
+    <div class="header">
+      <img src="https://i.imgur.com/iCRuacp.png" alt="Logo Sow Capital">
+    </div>
+""", unsafe_allow_html=True)
 
 def verificar_alertas(inputs, aporte_calculado=None):
-    erros = []
-    alertas = []
-    informativos = []
+    erros, alertas, informativos = [], [], []
 
     idade_atual = inputs["idade_atual"]
     idade_aposentadoria = inputs["idade_aposentadoria"]
@@ -50,69 +72,80 @@ def verificar_alertas(inputs, aporte_calculado=None):
 
     return erros, alertas, informativos
 
-import sys
-import os
-sys.path.append(os.path.dirname(__file__))
+def formatar_montante(valor):
+    if valor >= 1_000_000:
+        return f'R$ {valor / 1_000_000:.2f}M'
+    elif valor >= 1_000:
+        return f'R$ {valor / 1_000:.2f}K'
+    else:
+        return f'R$ {valor:.2f}'
 
-from core import calcular_aporte, simular_aposentadoria
+st.title("🧮 Simulador de Aposentadoria")
 
-import streamlit as st
-import pandas as pd
-import altair as alt
-from io import BytesIO
-import requests
+with st.form("formulario"):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        idade_atual = st.number_input("Idade Atual", value=30, min_value=0)
+        expectativa_vida = st.number_input("Expectativa de Vida", value=85, min_value=1)
+        poupanca = st.number_input("Poupança Atual (R$)", value=0.0, min_value=0.0)
+    with col2:
+        idade_aposentadoria = st.number_input("Idade para Aposentadoria", value=60, min_value=1)
+        renda_desejada = st.number_input("Renda Desejada na Aposentadoria (R$)", value=3000.0, min_value=0.0)
+        taxa_juros_anual = st.number_input("Taxa de Juros Anual (ex: 0.05 para 5%)", value=0.05, min_value=0.0)
+    with col3:
+        renda_atual = st.number_input("Renda Mensal Atual (R$)", value=5000.0, min_value=0.0)
+        imposto = st.number_input("Alíquota de Imposto sobre Resgates (0 a 1)", value=0.15, min_value=0.0, max_value=1.0)
 
-st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
+    submit = st.form_submit_button("Calcular Aporte")
 
-st.markdown("""
-    <style>
-    .header {
-        background-color: #123934;
-        padding: 20px 10px;
-        text-align: center;
+if submit:
+    dados = {
+        "idade_atual": idade_atual,
+        "idade_aposentadoria": idade_aposentadoria,
+        "expectativa_vida": expectativa_vida,
+        "renda_atual": renda_atual,
+        "renda_desejada": renda_desejada,
+        "poupanca": poupanca,
+        "taxa_juros_anual": taxa_juros_anual,
+        "imposto": imposto
     }
-    .header img {
-        max-width: 200px;
-        height: auto;
-    }
-    </style>
-    <div class="header">
-      <img src="https://i.imgur.com/iCRuacp.png" alt="Logo Sow Capital">
-    </div>
-""", unsafe_allow_html=True)
 
-# (código segue igual até a função gerar_excel)
+    aporte_mensal, patrimonio_final, percentual = calcular_aporte(dados)
 
-def gerar_excel():
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        workbook = writer.book
-        worksheet = workbook.add_worksheet("Simulação")
-        writer.sheets["Simulação"] = worksheet
+    # Exibir alertas
+    erros, alertas, informativos = verificar_alertas(dados, aporte_mensal)
+    for msg in erros:
+        st.error(f"❌ {msg}")
+    for msg in alertas:
+        st.warning(f"⚠️ {msg}")
+    for msg in informativos:
+        st.info(f"ℹ️ {msg}")
 
-        bold = workbook.add_format({'bold': True})
-        money = workbook.add_format({'num_format': 'R$ #,##0.00'})
-        percent = workbook.add_format({'num_format': '0.00%'})
-        header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
+    # Resultados principais
+    st.markdown("## 🧾 Resultados")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Aporte Mensal Necessário", formatar_montante(aporte_mensal))
+    col2.metric("Poupança Necessária ao Aposentar", formatar_montante(patrimonio_final))
+    col3.metric("Poupança Final Total", formatar_montante(patrimonio_final))
+    col4.metric("Renda Cobrida por Juros (%)", f"{percentual:.1f}%")
 
-        worksheet.write("A6", "💰 Aporte mensal", bold)
-        worksheet.write("B6", aporte_mensal, money)
-        worksheet.write("A7", "🏦 Poupança necessária", bold)
-        worksheet.write("B7", patrimonio_final, money)
-        worksheet.write("A8", "📆 Anos de aportes", bold)
-        worksheet.write("B8", anos_aporte)
-        worksheet.write("A9", "📊 % da renda atual", bold)
-        worksheet.write("B9", percentual / 100, percent)
+    # Detalhamento do gráfico
+    st.markdown("### 📊 Evolução Patrimonial")
+    df_resultado = pd.read_csv("output.csv")
+    df_resultado = df_resultado[df_resultado["Ano"].apply(lambda x: x % 1 == 0)]
 
-        df_export = df_chart[["Idade", "Montante"]]
-        df_export.columns = ["Idade", "Patrimônio"]
-        df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
+    chart = alt.Chart(df_resultado).mark_line(point=True).encode(
+        x=alt.X("Ano:O", axis=alt.Axis(title="Ano")),
+        y=alt.Y("Patrimônio (R$)", axis=alt.Axis(title="Patrimônio")),
+        tooltip=["Ano", "Patrimônio (R$)"]
+    ).properties(width=800, height=400)
 
-        for col_num, value in enumerate(df_export.columns.values):
-            worksheet.write(10, col_num, value, header_format)
+    st.altair_chart(chart, use_container_width=True)
 
-        worksheet.set_column("A:A", 10)
-        worksheet.set_column("B:B", 20, money)
-
-    output.seek(0)
-    return output
+    # Exportar resultado
+    st.download_button(
+        label="📥 Exportar CSV",
+        data=df_resultado.to_csv(index=False).encode("utf-8"),
+        file_name="simulacao_aposentadoria.csv",
+        mime="text/csv"
+    )

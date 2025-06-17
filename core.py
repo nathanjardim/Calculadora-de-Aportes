@@ -63,9 +63,11 @@ def calcular_aporte(
 ):
     min_aporte = 0
     tolerancia = 1
-    aporte_final = None
+    max_iteracoes = 100
+    iteracoes = 0
 
-    while max_aporte - min_aporte > tolerancia:
+    while max_aporte - min_aporte > tolerancia and iteracoes < max_iteracoes:
+        iteracoes += 1
         teste = (min_aporte + max_aporte) / 2
 
         saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
@@ -86,7 +88,20 @@ def calcular_aporte(
         else:
             min_aporte = teste
 
-    aporte_final = round((min_aporte + max_aporte) / 2, 2)
-    return {
-        "aporte_mensal": aporte_final
-    }
+    # Verificação final: mesmo com aporte máximo o objetivo foi atingido?
+    saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
+        idade_atual,
+        idade_aposentadoria,
+        expectativa_vida,
+        poupanca_inicial,
+        max_aporte,
+        renda_mensal,
+        rentabilidade_anual,
+        imposto,
+    )
+    alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
+
+    if saldo_final < alvo - tolerancia:
+        return {"aporte_mensal": None}
+
+    return {"aporte_mensal": round((min_aporte + max_aporte) / 2, 2)}

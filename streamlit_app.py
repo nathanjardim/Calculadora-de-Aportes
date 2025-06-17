@@ -91,11 +91,6 @@ if submitted:
         st.error("❌ Não é possível atingir o objetivo com os parâmetros fornecidos.")
         st.stop()
 
-    st.success(f"💰 Aporte mensal ideal: R$ {aporte_mensal:.2f}")
-
-    percentual = aporte_mensal / renda_atual
-    st.metric("Percentual da renda atual", f"{percentual*100:.1f}%")
-
     _, _, patrimonio = simular_aposentadoria(
         idade_atual=int(idade_atual),
         idade_aposentadoria=int(idade_aposentadoria),
@@ -106,6 +101,31 @@ if submitted:
         rentabilidade_anual=taxa_juros_anual,
         imposto=imposto_renda
     )
+
+    st.markdown("### 📄 Resultados dos Aportes")
+    anos_aporte = idade_aposentadoria - idade_atual
+    percentual = aporte_mensal / renda_atual * 100
+    patrimonio_final = patrimonio[(idade_aposentadoria - idade_atual) * 12]
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        with st.container():
+            st.markdown("#### 💰 Aporte mensal")
+            st.markdown(f"<h3 style='margin-top:0'>R$ {aporte_mensal:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + "</h3>", unsafe_allow_html=True)
+
+        with st.container():
+            st.markdown("#### 🏦 Poupança necessária")
+            st.markdown(f"<h3 style='margin-top:0'>R$ {patrimonio_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") + "</h3>", unsafe_allow_html=True)
+
+    with col2:
+        with st.container():
+            st.markdown("#### 📆 Anos de aportes")
+            st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
+
+        with st.container():
+            st.markdown("#### 📊 % da renda atual")
+            st.markdown(f"<h3 style='margin-top:0'>{percentual:.2f}%</h3>", unsafe_allow_html=True)
 
     st.markdown("### 📈 Evolução do Patrimônio")
     df_chart = pd.DataFrame({
@@ -126,7 +146,7 @@ if submitted:
 
     st.altair_chart(chart, use_container_width=True)
 
-    st.markdown("### 📤 Exportar dados")
+    st.markdown("### 📅 Exportar dados")
     df_export = pd.DataFrame({
         "Idade": df_chart["Idade"],
         "Patrimônio": df_chart["Montante"]
@@ -140,7 +160,7 @@ if submitted:
         return output
 
     st.download_button(
-        label="📥 Baixar Excel",
+        label="📅 Baixar Excel",
         data=gerar_excel(),
         file_name="simulacao_aposentadoria.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

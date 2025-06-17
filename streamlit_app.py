@@ -265,7 +265,7 @@ st.markdown("""
             </span>
             <span>|</span>
             <span>
-                <strong>Email:</strong> ri@sow.capital – 
+                <strong>Email:</strong> ri@sow.capital <span style="margin: 0 8px;">|</span>
                 <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
             </span>
         </div>

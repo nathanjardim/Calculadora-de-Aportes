@@ -235,21 +235,23 @@ st.markdown("""
     <style>
     .footer {
         background-color: #123934;
-        padding: 20px 40px;
+        padding: 15px 0 10px 0;
         color: white;
-        margin-top: 40px;
+        margin-top: 30px;
     }
     .footer-content {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
+        gap: 80px;
         flex-wrap: wrap;
-        max-width: 900px;
-        margin: 0 auto;
+        max-width: 800px;
+        margin: auto;
+        font-size: 14px;
+        line-height: 1.5;
     }
     .footer-column {
         flex: 1;
-        min-width: 250px;
-        margin-bottom: 10px;
+        min-width: 200px;
     }
     .footer a {
         color: white;

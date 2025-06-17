@@ -8,7 +8,6 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from io import BytesIO
-import requests
 
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 
@@ -103,7 +102,7 @@ if submitted:
         imposto=imposto_renda
     )
 
-    st.markdown("### 📄 Resultados dos Aportes")
+    st.markdown("### 📤 Resultados dos Aportes")
     anos_aporte = idade_aposentadoria - idade_atual
     percentual = aporte_mensal / renda_atual * 100
     patrimonio_final = patrimonio[(idade_aposentadoria - idade_atual) * 12]
@@ -133,7 +132,6 @@ if submitted:
         "Idade": [idade_atual + i / 12 for i in range(len(patrimonio))],
         "Montante": patrimonio
     })
-
     df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
     df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: f"R$ {v:,.0f}".replace(",", "."))
 
@@ -148,7 +146,7 @@ if submitted:
 
     st.altair_chart(chart, use_container_width=True)
 
-    st.markdown("### 📅 Exportar dados")
+    st.markdown("### 📥 Exportar dados")
 
     def gerar_excel():
         output = BytesIO()
@@ -159,15 +157,8 @@ if submitted:
 
             bold = workbook.add_format({'bold': True})
             money = workbook.add_format({'num_format': 'R$ #,##0.00'})
-            percent = workbook.add_format({'num_format': '0.00%'})
+            percent_fmt = workbook.add_format({'num_format': '0.00%'})
             header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
-
-            logo_path = "/tmp/logo_sow.png"
-            if not os.path.exists(logo_path):
-                r = requests.get("https://i.imgur.com/iCRuacp.png")
-                with open(logo_path, "wb") as f:
-                    f.write(r.content)
-            worksheet.insert_image("A1", logo_path, {"x_scale": 0.5, "y_scale": 0.5})
 
             worksheet.write("A6", "💰 Aporte mensal", bold)
             worksheet.write("B6", aporte_mensal, money)
@@ -176,7 +167,7 @@ if submitted:
             worksheet.write("A8", "📆 Anos de aportes", bold)
             worksheet.write("B8", anos_aporte)
             worksheet.write("A9", "📊 % da renda atual", bold)
-            worksheet.write("B9", percentual / 100, percent)
+            worksheet.write("B9", percentual / 100, percent_fmt)
 
             df_export = df_chart[["Idade", "Montante"]]
             df_export.columns = ["Idade", "Patrimônio"]
@@ -192,7 +183,7 @@ if submitted:
         return output
 
     st.download_button(
-        label="📅 Baixar Excel",
+        label="📥 Baixar Excel",
         data=gerar_excel(),
         file_name="simulacao_aposentadoria.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

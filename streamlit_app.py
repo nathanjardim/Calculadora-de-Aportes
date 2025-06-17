@@ -53,9 +53,9 @@ with st.form("form_inputs"):
     if modo == "atingir":
         outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, step=10000)
 
-        usar_percentual = st.toggle("Usar percentual da renda como aporte?")
+        
     percentual_de_renda = None
-    if usar_percentual:
+    
         percentual_input = st.number_input("Percentual da renda a ser aportado (%)", min_value=0.0, max_value=100.0, step=0.5)
         percentual_de_renda = percentual_input / 100
 
@@ -78,7 +78,7 @@ if submitted:
         for e in erros:
             st.error(e)
     else:
-        if usar_percentual and percentual_de_renda is not None:
+        
             aporte_mensal = round(percentual_de_renda * renda_atual, 2)
             st.info(f"Simulado com aporte fixo de {percentual_de_renda*100:.1f}% da renda mensal: R$ {aporte_mensal:,.2f}")
         else:

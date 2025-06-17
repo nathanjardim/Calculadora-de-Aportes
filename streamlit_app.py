@@ -74,30 +74,34 @@ if submitted:
         for e in erros:
             st.error(e)
     else:
-        resultado = calcular_aporte(
-            idade_atual=int(idade_atual),
-            idade_aposentadoria=int(idade_aposentadoria),
-            expectativa_vida=int(expectativa_vida),
-            poupanca_inicial=poupanca_atual,
-            renda_mensal=renda_desejada,
-            rentabilidade_anual=taxa_juros_anual,
-            imposto=imposto_renda,
-            modo=modo,
-            valor_final_desejado=outro_valor,
-            renda_atual=renda_atual,
-            percentual_de_renda=percentual_de_renda
-        )
+        if usar_percentual and percentual_de_renda is not None:
+            aporte_mensal = round(percentual_de_renda * renda_atual, 2)
+            st.info(f"Simulado com aporte fixo de {percentual_de_renda*100:.1f}% da renda mensal: R$ {aporte_mensal:,.2f}")
+        else:
+            resultado = calcular_aporte(
+                idade_atual=int(idade_atual),
+                idade_aposentadoria=int(idade_aposentadoria),
+                expectativa_vida=int(expectativa_vida),
+                poupanca_inicial=poupanca_atual,
+                renda_mensal=renda_desejada,
+                rentabilidade_anual=taxa_juros_anual,
+                imposto=imposto_renda,
+                modo=modo,
+                valor_final_desejado=outro_valor
+            )
+            aporte_mensal = resultado["aporte_mensal"]
 
-        st.success(f"💰 Aporte mensal ideal: R$ {resultado['aporte_mensal']:.2f}")
-        if "comentario" in resultado:
-            st.info(resultado["comentario"])
+        st.success(f"💰 Aporte mensal ideal: R$ {aporte_mensal:.2f}")
+
+        percentual = aporte_mensal / renda_atual
+        st.metric("Percentual da renda atual", f"{percentual*100:.1f}%")
 
         _, _, patrimonio = simular_aposentadoria(
             idade_atual=int(idade_atual),
             idade_aposentadoria=int(idade_aposentadoria),
             expectativa_vida=int(expectativa_vida),
             poupanca_inicial=poupanca_atual,
-            aporte_mensal=resultado['aporte_mensal'],
+            aporte_mensal=aporte_mensal,
             renda_mensal=renda_desejada,
             rentabilidade_anual=taxa_juros_anual,
             imposto=imposto_renda

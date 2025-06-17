@@ -27,50 +27,6 @@ def check_password():
 
 check_password()
 
-def verificar_alertas(inputs, aporte_calculado=None):
-    erros, alertas, informativos = [], [], []
-    idade_atual = inputs["idade_atual"]
-    idade_aposentadoria = inputs["idade_aposentadoria"]
-    expectativa_vida = inputs["expectativa_vida"]
-    renda_atual = inputs["renda_atual"]
-    renda_desejada = inputs["renda_desejada"]
-    poupanca = inputs["poupanca"]
-    taxa = inputs["taxa_juros_anual"]
-    imposto = inputs["imposto"]
-    tempo_aporte = idade_aposentadoria - idade_atual
-
-    if idade_atual >= idade_aposentadoria:
-        erros.append("A idade atual deve ser menor que a idade de aposentadoria.")
-    if expectativa_vida <= idade_aposentadoria:
-        erros.append("A expectativa de vida deve ser maior que a idade de aposentadoria.")
-    if renda_atual <= 0:
-        erros.append("Renda atual inválida. Verifique o campo preenchido.")
-    if taxa < 0 or taxa > 1:
-        erros.append("Taxa de juros fora do intervalo permitido. Verifique os parâmetros.")
-    if imposto < 0 or imposto > 1:
-        erros.append("Alíquota de imposto fora do intervalo permitido. Verifique os parâmetros.")
-    if aporte_calculado is not None and aporte_calculado > renda_atual:
-        erros.append("Aporte calculado maior que a renda atual. Verifique os parâmetros.")
-    if taxa > 0.10:
-        alertas.append("Taxa de juros real elevada. Verifique os parâmetros.")
-    if tempo_aporte < 5:
-        alertas.append("Prazo muito curto até a aposentadoria. Verifique os parâmetros.")
-    if tempo_aporte > 50:
-        alertas.append("Prazo muito longo até a aposentadoria. Verifique os parâmetros.")
-    if renda_desejada > 10 * renda_atual:
-        alertas.append("Renda desejada superior à renda atual. Verifique os parâmetros.")
-    if aporte_calculado is not None and aporte_calculado > 0.5 * renda_atual:
-        alertas.append("Aporte elevado em relação à renda. Verifique os parâmetros.")
-    if imposto > 0.275:
-        informativos.append("Imposto acima da alíquota padrão. Confirme o valor informado.")
-    if aporte_calculado is not None and aporte_calculado < 10:
-        informativos.append("Aporte muito baixo detectado. Confirme os parâmetros utilizados.")
-    if poupanca > 0 and aporte_calculado is not None and poupanca > aporte_calculado * tempo_aporte * 12:
-        informativos.append("Poupança inicial superior ao necessário. Verifique os dados.")
-    if renda_desejada == 0:
-        informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
-    return erros, alertas, informativos
-
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 st.markdown("""
@@ -95,7 +51,7 @@ st.title("Wealth Planning")
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
-    idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, value=30, format="%.0f")
+    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
     poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
@@ -104,8 +60,8 @@ with st.form("formulario"):
 
     st.markdown("### 🏁 Aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
-    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100, value=65, format="%.0f")
-    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120, value=90, format="%.0f")
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
+    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 
     st.markdown("### 🎯 Objetivo Final")
     modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
@@ -135,6 +91,7 @@ if submitted:
 
     aporte = resultado.get("aporte_mensal")
 
+    from streamlit_app import verificar_alertas  # Ou ajuste se estiver no mesmo arquivo
     erros, alertas, informativos = verificar_alertas(dados, aporte)
 
     for e in erros:
@@ -153,7 +110,7 @@ if submitted:
 
         anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
         percentual = int(aporte / dados["renda_atual"] * 100)
-        patrimonio_final = int(patrimonio[anos_aporte * 12])
+        patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
 
         col1, col2 = st.columns(2)

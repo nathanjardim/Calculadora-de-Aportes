@@ -94,7 +94,12 @@ if submitted:
                 modo=modo,
                 valor_final_desejado=outro_valor
             )
+
             aporte_mensal = resultado["aporte_mensal"]
+
+            if aporte_mensal is None:
+                st.error("❌ Não é possível atingir o objetivo com os parâmetros fornecidos. Tente aumentar a idade de aposentadoria, reduzir a renda desejada ou aumentar a rentabilidade.")
+                st.stop()
 
         st.success(f"💰 Aporte mensal ideal: R$ {aporte_mensal:.2f}")
 

@@ -100,6 +100,10 @@ if submitted:
     st.metric("Percentual da renda atual", f"{percentual*100:.1f}%")
 
     _, _, patrimonio = simular_aposentadoria(
+
+    st.markdown("### 📊 Detalhamento dos Aportes")
+    st.write(f"**Poupança necessária ao se aposentar:** R$ {patrimonio_aposentadoria:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    st.write(f"**Anos de aportes:** {int(idade_aposentadoria - idade_atual)}")
         idade_atual=int(idade_atual),
         idade_aposentadoria=int(idade_aposentadoria),
         expectativa_vida=int(expectativa_vida),

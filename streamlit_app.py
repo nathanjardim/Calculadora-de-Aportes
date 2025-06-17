@@ -241,25 +241,20 @@ st.markdown("""
     }
     .footer-content {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: flex-start;
-        max-width: 950px;
-        margin: 0 auto;
+        gap: 80px;
+        max-width: 800px;
+        margin: auto;
         font-size: 13px;
         line-height: 1.4;
     }
     .footer-column {
-        flex: 1;
-        padding: 0 10px;
+        min-width: 250px;
     }
     .footer a {
         color: white;
         text-decoration: underline;
-    }
-    .footer-logo {
-        max-height: 60px;
-        display: inline-block;
-        margin-top: 5px;
     }
     </style>
     <div class="footer">
@@ -273,9 +268,6 @@ st.markdown("""
             <div class="footer-column">
                 <p style="margin: 0;"><strong>Email:</strong> ri@sow.capital<br>
                 <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a></p>
-            </div>
-            <div class="footer-column" style="text-align: right;">
-                <img src="https://i.imgur.com/iCRuacp.png" class="footer-logo">
             </div>
         </div>
     </div>

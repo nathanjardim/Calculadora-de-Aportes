@@ -9,6 +9,24 @@ import pandas as pd
 import altair as alt
 from io import BytesIO
 
+# 🔐 Proteção por senha
+def check_password():
+    def password_entered():
+        if st.session_state["password"] == "sow123":
+            st.session_state["password_correct"] = True
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
+
+    if not st.session_state["password_correct"]:
+        st.markdown("## 🔒 Área protegida")
+        st.text_input("Digite a senha", type="password", on_change=password_entered, key="password")
+        st.stop()
+
+check_password()
+
 def verificar_alertas(inputs, aporte_calculado=None):
     erros = []
     alertas = []

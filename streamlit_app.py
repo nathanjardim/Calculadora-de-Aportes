@@ -28,7 +28,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.title("Simulador de Aposentadoria")
+st.title("Wealth Planning")
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")

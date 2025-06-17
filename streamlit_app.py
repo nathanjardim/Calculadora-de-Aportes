@@ -238,7 +238,7 @@ st.markdown("""
         padding: 10px 0;
         color: white;
         margin-top: 20px;
-        font-size: 13px;
+        font-size: 14.5px;
     }
     .footer-content {
         display: flex;

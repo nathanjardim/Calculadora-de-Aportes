@@ -53,8 +53,7 @@ with st.form("form_inputs"):
     if modo == "atingir":
         outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, step=10000)
 
-    st.markdown("### ⚙️ Estratégia de Aporte")
-    usar_percentual = st.toggle("Usar percentual da renda como aporte?")
+        usar_percentual = st.toggle("Usar percentual da renda como aporte?")
     percentual_de_renda = None
     if usar_percentual:
         percentual_input = st.number_input("Percentual da renda a ser aportado (%)", min_value=0.0, max_value=100.0, step=0.5)

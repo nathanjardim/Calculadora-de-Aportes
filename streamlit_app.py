@@ -45,7 +45,7 @@ with st.form("form_inputs"):
     st.markdown("### 🏁 Aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, step=1000)
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual+1, max_value=100, step=1)
-    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria+1, max_value=120, step=1)
+    expectativa_vida = st.number_input("Expectativa de vida", min_value=1, max_value=120, value=80, step=1)
 
     st.markdown("### 🎯 Fim do Patrimônio")
     modo = st.selectbox("Objetivo", options=["manter", "zerar", "atingir"])
@@ -57,6 +57,10 @@ with st.form("form_inputs"):
     
 
     submitted = st.form_submit_button("📈 Definir Aportes")
+
+    if expectativa_vida <= idade_aposentadoria:
+        st.error("A expectativa de vida deve ser maior que a idade de aposentadoria.")
+        st.stop()
 
 if submitted:
     erros = []

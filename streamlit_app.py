@@ -242,15 +242,17 @@ st.markdown("""
     .footer-content {
         display: flex;
         justify-content: center;
-        align-items: flex-start;
+        align-items: center;
         gap: 80px;
-        max-width: 800px;
+        max-width: 1000px;
         margin: auto;
         font-size: 13px;
-        line-height: 1.4;
+        line-height: 1.5;
+        flex-wrap: wrap;
+        text-align: center;
     }
     .footer-column {
-        min-width: 250px;
+        min-width: 300px;
     }
     .footer a {
         color: white;
@@ -260,14 +262,15 @@ st.markdown("""
     <div class="footer">
         <div class="footer-content">
             <div class="footer-column">
-                <p style="margin: 0;"><strong>Rio de Janeiro</strong><br>
-                Av. Ataulfo de Paiva, 341<br>
-                Sala 303 – Leblon, RJ<br>
-                CEP: 22440-032</p>
+                <p style="margin: 0;">
+                    <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
+                </p>
             </div>
             <div class="footer-column">
-                <p style="margin: 0;"><strong>Email:</strong> ri@sow.capital<br>
-                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a></p>
+                <p style="margin: 0;">
+                    <strong>Email:</strong> ri@sow.capital<br>
+                    <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
+                </p>
             </div>
         </div>
     </div>

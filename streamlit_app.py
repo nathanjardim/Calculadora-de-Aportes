@@ -231,7 +231,7 @@ if submitted:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-        st.markdown("""
+st.markdown("""
     <style>
     .footer {
         background-color: #123934;

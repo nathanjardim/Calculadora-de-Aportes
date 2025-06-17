@@ -32,26 +32,18 @@ st.title("Wealth Planning")
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=0, step=1000, value=10000)
-    idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, step=1, value=30)
-    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0, step=1000, value=50000)
-
+    renda_atual = st.number_input("Renda atual (R$)", min_value=None,  step=1000,     idade_atual = st.number_input("Idade atual", min_value=None,  max_    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=None,  step=1000, 
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.1)
-    imposto_renda_percentual = st.number_input("IR sobre resgates (%)", min_value=0.0, max_value=100.0, value=15.0, step=0.1)
-    taxa_juros_anual = taxa_juros_percentual / 100
+    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=None,  max_    imposto_renda_percentual = st.number_input("IR sobre resgates (%)", min_value=None,  max_    taxa_juros_anual = taxa_juros_percentual / 100
     imposto_renda = imposto_renda_percentual / 100
 
     st.markdown("### 🏁 Aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, step=1000, value=15000)
-    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=19, max_value=100, step=1, value=65)
-    expectativa_vida = st.number_input("Expectativa de vida", min_value=20, max_value=120, value=90, step=1)
-
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=None,  step=1000,     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=None,  max_    expectativa_vida = st.number_input("Expectativa de vida", min_value=None,  max_
     st.markdown("### 🎯 Fim do Patrimônio")
     modo = st.selectbox("Objetivo", options=["manter", "zerar", "atingir"])
     outro_valor = None
     if modo == "atingir":
-        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, step=10000)
+        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=None,  step=10000)
 
     submitted = st.form_submit_button("📈 Definir Aportes")
 
@@ -92,6 +84,10 @@ if submitted:
         st.stop()
 
     st.success(f"💰 Aporte mensal ideal: R$ {aporte_mensal:.2f}")
+
+    st.markdown('### 📊 Detalhamento dos Aportes')
+    st.write(f"**Poupança necessária ao se aposentar:** R$ {patrimonio_aposentadoria:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    st.write(f"**Anos de aportes:** {int(idade_aposentadoria - idade_atual)}")
 
     percentual = aporte_mensal / renda_atual
     st.metric("Percentual da renda atual", f"{percentual*100:.1f}%")
@@ -135,7 +131,18 @@ if submitted:
     def gerar_excel():
         output = BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-            df_export.to_excel(writer, index=False, sheet_name="Simulação")
+            resumo = pd.DataFrame({
+                'Métrica': ['Aporte mensal', 'Poupança necessária', 'Anos de aporte', 'Percentual da renda'],
+                'Valor': [
+                    f"R$ {aporte_mensal:,.2f}",
+                    f"R$ {patrimonio_aposentadoria:,.2f}",
+                    int(idade_aposentadoria - idade_atual),
+                    f"{percentual*100:.2f}%"
+                ]
+            })
+            df_export_filtrado = df_export[df_export['Idade'] % 1 == 0].copy()
+            resumo.to_excel(writer, index=False, sheet_name="Resumo")
+            df_export_filtrado.to_excel(writer, index=False, sheet_name="Simulação")
         output.seek(0)
         return output
 

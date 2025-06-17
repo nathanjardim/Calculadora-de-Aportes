@@ -241,32 +241,23 @@ st.markdown("""
         font-size: 14.5px;
     }
     .footer-content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
         text-align: center;
-        gap: 20px;
+        max-width: 1100px;
+        margin: auto;
+        line-height: 1.5;
     }
     .footer a {
         color: white;
         text-decoration: underline;
-    }
-    @media (max-width: 768px) {
-        .footer-content {
-            flex-direction: column;
-        }
     }
     </style>
     <div class="footer">
         <div class="footer-content">
             <span>
                 <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
-            </span>
-            <span style="margin: 0 8px;">|</span>
-            <span>
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
                 <strong>Email:</strong> ri@sow.capital
-                <span style="margin: 0 8px;">|</span>
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
                 <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
             </span>
         </div>

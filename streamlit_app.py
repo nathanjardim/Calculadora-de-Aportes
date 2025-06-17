@@ -32,18 +32,18 @@ st.title("Wealth Planning")
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=None,  step=1000,     idade_atual = st.number_input("Idade atual", min_value=None,  max_    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=None,  step=1000, 
+    renda_atual = st.number_input("Renda atual (R$)", min_value=0,  step=1000,     idade_atual = st.number_input("Idade atual", min_value=0,  max_    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0,  step=1000, 
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=None,  max_    imposto_renda_percentual = st.number_input("IR sobre resgates (%)", min_value=None,  max_    taxa_juros_anual = taxa_juros_percentual / 100
+    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0,  max_    imposto_renda_percentual = st.number_input("IR sobre resgates (%)", min_value=0,  max_    taxa_juros_anual = taxa_juros_percentual / 100
     imposto_renda = imposto_renda_percentual / 100
 
     st.markdown("### 🏁 Aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=None,  step=1000,     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=None,  max_    expectativa_vida = st.number_input("Expectativa de vida", min_value=None,  max_
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0,  step=1000,     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=0,  max_    expectativa_vida = st.number_input("Expectativa de vida", min_value=0,  max_
     st.markdown("### 🎯 Fim do Patrimônio")
     modo = st.selectbox("Objetivo", options=["manter", "zerar", "atingir"])
     outro_valor = None
     if modo == "atingir":
-        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=None,  step=10000)
+        outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0,  step=10000)
 
     submitted = st.form_submit_button("📈 Definir Aportes")
 

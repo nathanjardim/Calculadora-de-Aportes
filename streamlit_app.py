@@ -60,7 +60,7 @@ def verificar_alertas(inputs, aporte_calculado=None):
 
     return erros, alertas, informativos
 
-st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
+st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 st.markdown("""
     <style>
@@ -79,7 +79,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.title("Simulador de Aposentadoria")
+st.title("Wealth Planning")
 
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")

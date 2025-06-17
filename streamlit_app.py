@@ -1,5 +1,10 @@
-import streamlit as st
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
+
 from core import calcular_aporte, simular_aposentadoria
+
+import streamlit as st
 import pandas as pd
 import altair as alt
 from io import BytesIO

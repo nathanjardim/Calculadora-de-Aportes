@@ -235,19 +235,20 @@ st.markdown("""
     <style>
     .footer {
         background-color: #123934;
-        padding: 15px 0 10px 0;
+        padding: 10px 0;
         color: white;
-        margin-top: 30px;
+        margin-top: 25px;
     }
     .footer-content {
         display: flex;
         justify-content: center;
-        gap: 80px;
+        gap: 60px;
         flex-wrap: wrap;
-        max-width: 800px;
+        max-width: 900px;
         margin: auto;
-        font-size: 14px;
+        font-size: 13.5px;
         line-height: 1.5;
+        align-items: flex-start;
     }
     .footer-column {
         flex: 1;
@@ -257,10 +258,15 @@ st.markdown("""
         color: white;
         text-decoration: underline;
     }
+    .footer-logo {
+        max-height: 60px;
+        margin-bottom: 10px;
+    }
     </style>
     <div class="footer">
         <div class="footer-content">
             <div class="footer-column">
+                <img src="https://i.imgur.com/iCRuacp.png" class="footer-logo">
                 <p><strong>Rio de Janeiro</strong><br>
                 Av. Ataulfo de Paiva, 341<br>
                 Sala 303 – Leblon, RJ<br>

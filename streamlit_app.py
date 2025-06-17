@@ -238,40 +238,36 @@ st.markdown("""
         padding: 10px 0;
         color: white;
         margin-top: 20px;
+        font-size: 13px;
     }
     .footer-content {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 80px;
-        max-width: 1000px;
-        margin: auto;
-        font-size: 13px;
-        line-height: 1.5;
         flex-wrap: wrap;
         text-align: center;
-    }
-    .footer-column {
-        min-width: 300px;
+        gap: 20px;
     }
     .footer a {
         color: white;
         text-decoration: underline;
     }
+    @media (max-width: 768px) {
+        .footer-content {
+            flex-direction: column;
+        }
+    }
     </style>
     <div class="footer">
         <div class="footer-content">
-            <div class="footer-column">
-                <p style="margin: 0;">
-                    <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
-                </p>
-            </div>
-            <div class="footer-column">
-                <p style="margin: 0;">
-                    <strong>Email:</strong> ri@sow.capital<br>
-                    <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
-                </p>
-            </div>
+            <span>
+                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
+            </span>
+            <span>|</span>
+            <span>
+                <strong>Email:</strong> ri@sow.capital – 
+                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
+            </span>
         </div>
     </div>
 """, unsafe_allow_html=True)

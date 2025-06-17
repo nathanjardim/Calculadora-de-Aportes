@@ -235,46 +235,49 @@ st.markdown("""
     <style>
     .footer {
         background-color: #123934;
-        padding: 10px 0;
+        padding: 12px 0;
         color: white;
-        margin-top: 25px;
+        margin-top: 20px;
     }
     .footer-content {
         display: flex;
-        justify-content: center;
-        gap: 60px;
-        flex-wrap: wrap;
-        max-width: 900px;
-        margin: auto;
-        font-size: 13.5px;
-        line-height: 1.5;
+        justify-content: space-between;
         align-items: flex-start;
+        flex-wrap: wrap;
+        max-width: 950px;
+        margin: auto;
+        font-size: 13px;
+        line-height: 1.4;
     }
     .footer-column {
         flex: 1;
         min-width: 200px;
+        padding: 0 10px;
+    }
+    .footer-logo {
+        max-height: 60px;
+        display: block;
+        margin-left: auto;
     }
     .footer a {
         color: white;
         text-decoration: underline;
     }
-    .footer-logo {
-        max-height: 60px;
-        margin-bottom: 10px;
-    }
     </style>
     <div class="footer">
         <div class="footer-content">
             <div class="footer-column">
-                <img src="https://i.imgur.com/iCRuacp.png" class="footer-logo">
-                <p><strong>Rio de Janeiro</strong><br>
+                <p style="margin: 0;"><strong>Rio de Janeiro</strong><br>
                 Av. Ataulfo de Paiva, 341<br>
                 Sala 303 – Leblon, RJ<br>
                 CEP: 22440-032</p>
             </div>
             <div class="footer-column">
-                <p><strong>Email:</strong> ri@sow.capital<br>
+                <p style="margin: 0;"><strong>Email:</strong> ri@sow.capital<br>
                 <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a></p>
+            </div>
+            <div class="footer-column" style="display: flex; justify-content: flex-end;">
+                <img src="https://i.imgur.com/iCRuacp.png" class="footer-logo">
             </div>
         </div>
     </div>

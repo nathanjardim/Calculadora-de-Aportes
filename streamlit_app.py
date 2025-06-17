@@ -91,11 +91,6 @@ if submitted:
         st.error("❌ Não é possível atingir o objetivo com os parâmetros fornecidos.")
         st.stop()
 
-    st.success(f"💰 Aporte mensal ideal: R$ {aporte_mensal:.2f}")
-
-    percentual = aporte_mensal / renda_atual
-    st.metric("Percentual da renda atual", f"{percentual*100:.1f}%")
-
     _, _, patrimonio = simular_aposentadoria(
         idade_atual=int(idade_atual),
         idade_aposentadoria=int(idade_aposentadoria),
@@ -106,6 +101,22 @@ if submitted:
         rentabilidade_anual=taxa_juros_anual,
         imposto=imposto_renda
     )
+
+    st.markdown("### 📤 Resultados dos Aportes")
+    anos_aporte = idade_aposentadoria - idade_atual
+    percentual = aporte_mensal / renda_atual * 100
+    patrimonio_final = patrimonio[(idade_aposentadoria - idade_atual) * 12]
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### Aportes")
+        st.metric("Aportes mensais", f"R$ {aporte_mensal:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.metric("Poupança necessária", f"R$ {patrimonio_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.metric("Anos de aportes", anos_aporte)
+
+    with col2:
+        st.metric("Percentual da renda atual", f"{percentual:.2f}%")
 
     st.markdown("### 📈 Evolução do Patrimônio")
     df_chart = pd.DataFrame({
@@ -126,7 +137,7 @@ if submitted:
 
     st.altair_chart(chart, use_container_width=True)
 
-    st.markdown("### 📤 Exportar dados")
+    st.markdown("### 📥 Exportar dados")
     df_export = pd.DataFrame({
         "Idade": df_chart["Idade"],
         "Patrimônio": df_chart["Montante"]

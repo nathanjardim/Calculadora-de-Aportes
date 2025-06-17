@@ -54,10 +54,7 @@ with st.form("form_inputs"):
         outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0, step=10000)
 
         
-    percentual_de_renda = None
     
-        percentual_input = st.number_input("Percentual da renda a ser aportado (%)", min_value=0.0, max_value=100.0, step=0.5)
-        percentual_de_renda = percentual_input / 100
 
     submitted = st.form_submit_button("📈 Definir Aportes")
 
@@ -79,8 +76,6 @@ if submitted:
             st.error(e)
     else:
         
-            aporte_mensal = round(percentual_de_renda * renda_atual, 2)
-            st.info(f"Simulado com aporte fixo de {percentual_de_renda*100:.1f}% da renda mensal: R$ {aporte_mensal:,.2f}")
         else:
             resultado = calcular_aporte(
                 idade_atual=int(idade_atual),

@@ -263,9 +263,10 @@ st.markdown("""
             <span>
                 <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
             </span>
-            <span>|</span>
+            <span style="margin: 0 8px;">|</span>
             <span>
-                <strong>Email:</strong> ri@sow.capital <span style="margin: 0 8px;">|</span>
+                <strong>Email:</strong> ri@sow.capital
+                <span style="margin: 0 8px;">|</span>
                 <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
             </span>
         </div>

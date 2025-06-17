@@ -8,6 +8,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from io import BytesIO
+import requests
 
 st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 
@@ -156,16 +157,18 @@ if submitted:
             worksheet = workbook.add_worksheet("Simulação")
             writer.sheets["Simulação"] = worksheet
 
-            # Estilos
             bold = workbook.add_format({'bold': True})
             money = workbook.add_format({'num_format': 'R$ #,##0.00'})
             percent = workbook.add_format({'num_format': '0.00%'})
             header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-            # Logo
-            worksheet.insert_image("A1", "https://i.imgur.com/iCRuacp.png", {"x_scale": 0.5, "y_scale": 0.5})
+            logo_path = "/tmp/logo_sow.png"
+            if not os.path.exists(logo_path):
+                r = requests.get("https://i.imgur.com/iCRuacp.png")
+                with open(logo_path, "wb") as f:
+                    f.write(r.content)
+            worksheet.insert_image("A1", logo_path, {"x_scale": 0.5, "y_scale": 0.5})
 
-            # KPIs
             worksheet.write("A6", "💰 Aporte mensal", bold)
             worksheet.write("B6", aporte_mensal, money)
             worksheet.write("A7", "🏦 Poupança necessária", bold)
@@ -175,7 +178,6 @@ if submitted:
             worksheet.write("A9", "📊 % da renda atual", bold)
             worksheet.write("B9", percentual / 100, percent)
 
-            # Tabela
             df_export = df_chart[["Idade", "Montante"]]
             df_export.columns = ["Idade", "Patrimônio"]
             df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)

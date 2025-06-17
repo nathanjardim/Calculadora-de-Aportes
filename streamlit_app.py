@@ -230,3 +230,27 @@ if submitted:
             file_name="simulacao_aposentadoria.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
+        st.markdown("""
+    <style>
+    .footer {
+        background-color: #123934;
+        padding: 20px 10px;
+        text-align: center;
+        color: white;
+        margin-top: 40px;
+    }
+    .footer a {
+        color: white;
+        text-decoration: underline;
+    }
+    </style>
+    <div class="footer">
+        <p><strong>Rio de Janeiro</strong><br>
+        Av. Ataulfo de Paiva, 341<br>
+        Sala 303 – Leblon, RJ<br>
+        CEP: 22440-032<br><br>
+        <strong>Email:</strong> ri@sow.capital<br>
+        <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a></p>
+    </div>
+""", unsafe_allow_html=True)

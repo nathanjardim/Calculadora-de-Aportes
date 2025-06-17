@@ -9,7 +9,7 @@ import pandas as pd
 import altair as alt
 from io import BytesIO
 
-st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
+st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 st.markdown("""
     <style>

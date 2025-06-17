@@ -43,6 +43,7 @@ with st.form("form_inputs"):
     imposto_renda = imposto_renda_percentual / 100
 
     st.markdown("### 🏁 Aposentadoria")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, step=1000, value=15000)
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=19, max_value=100, step=1, value=65)
     expectativa_vida = st.number_input("Expectativa de vida", min_value=20, max_value=120, value=90, step=1)
 

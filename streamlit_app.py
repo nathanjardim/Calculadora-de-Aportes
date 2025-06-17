@@ -133,6 +133,7 @@ if submitted:
         "Montante": patrimonio
     })
 
+    df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
     df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: f"R$ {v:,.0f}".replace(",", "."))
 
     chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
@@ -147,15 +148,44 @@ if submitted:
     st.altair_chart(chart, use_container_width=True)
 
     st.markdown("### 📅 Exportar dados")
-    df_export = pd.DataFrame({
-        "Idade": df_chart["Idade"],
-        "Patrimônio": df_chart["Montante"]
-    })
 
     def gerar_excel():
         output = BytesIO()
         with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-            df_export.to_excel(writer, index=False, sheet_name="Simulação")
+            workbook = writer.book
+            worksheet = workbook.add_worksheet("Simulação")
+            writer.sheets["Simulação"] = worksheet
+
+            # Estilos
+            bold = workbook.add_format({'bold': True})
+            money = workbook.add_format({'num_format': 'R$ #,##0.00'})
+            percent = workbook.add_format({'num_format': '0.00%'})
+            header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
+
+            # Logo
+            worksheet.insert_image("A1", "https://i.imgur.com/iCRuacp.png", {"x_scale": 0.5, "y_scale": 0.5})
+
+            # KPIs
+            worksheet.write("A6", "💰 Aporte mensal", bold)
+            worksheet.write("B6", aporte_mensal, money)
+            worksheet.write("A7", "🏦 Poupança necessária", bold)
+            worksheet.write("B7", patrimonio_final, money)
+            worksheet.write("A8", "📆 Anos de aportes", bold)
+            worksheet.write("B8", anos_aporte)
+            worksheet.write("A9", "📊 % da renda atual", bold)
+            worksheet.write("B9", percentual / 100, percent)
+
+            # Tabela
+            df_export = df_chart[["Idade", "Montante"]]
+            df_export.columns = ["Idade", "Patrimônio"]
+            df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
+
+            for col_num, value in enumerate(df_export.columns.values):
+                worksheet.write(10, col_num, value, header_format)
+
+            worksheet.set_column("A:A", 10)
+            worksheet.set_column("B:B", 20, money)
+
         output.seek(0)
         return output
 

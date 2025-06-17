@@ -74,9 +74,7 @@ if submitted:
     if erros:
         for e in erros:
             st.error(e)
-    else:
         
-        else:
             resultado = calcular_aporte(
                 idade_atual=int(idade_atual),
                 idade_aposentadoria=int(idade_aposentadoria),

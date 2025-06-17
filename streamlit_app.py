@@ -9,7 +9,7 @@ import pandas as pd
 import altair as alt
 from io import BytesIO
 
-st.set_page_config(page_title="Wealth Planning", layout="wide")
+st.set_page_config(page_title="Simulador de Aposentadoria", layout="wide")
 
 st.markdown("""
     <style>
@@ -28,24 +28,21 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.title("Wealth Planning")
+st.title("Simulador de Aposentadoria")
 
 with st.form("form_inputs"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=0, step=1000, value=None)
-    idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, step=1, value=None)
-    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0, step=1000, value=None)
+    renda_atual = st.number_input("Renda atual (R$)", min_value=0, step=1000, value=1000)
+    idade_atual = st.number_input("Idade atual", min_value=18, max_value=100, step=1, value=18)
+    poupanca_atual = st.number_input("Poupança atual (R$)", min_value=0, step=1000, value=0)
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, step=0.1, value=None)
-    imposto_renda_percentual = st.number_input("IR sobre resgates (%)", min_value=0.0, max_value=100.0, step=0.1, value=None)
-    taxa_juros_anual = taxa_juros_percentual / 100
-    imposto_renda = imposto_renda_percentual / 100
-    imposto_renda = imposto_renda_percentual / 100
+    taxa_juros_percentual = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, step=0.1, value=1.0)
+    imposto_renda_percentual = st.number_input("IR sobre resgates (%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
 
     st.markdown("### 🏁 Aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, step=1000, value=None)
-    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=18, max_value=100, step=1, value=None)
-    expectativa_vida = st.number_input("Expectativa de vida", min_value=20, max_value=120, step=1, value=None)
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0, step=1000, value=1000)
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=18, max_value=100, step=1, value=19)
+    expectativa_vida = st.number_input("Expectativa de vida", min_value=20, max_value=120, step=1, value=20)
     st.markdown("### 🎯 Fim do Patrimônio")
     modo = st.selectbox("Objetivo", options=["manter", "zerar", "atingir"])
     outro_valor = None
@@ -53,6 +50,9 @@ with st.form("form_inputs"):
         outro_valor = st.number_input("Se outro valor, qual? (R$)", min_value=0,  step=10000)
 
     submitted = st.form_submit_button("📈 Definir Aportes")
+    if taxa_juros_percentual is not None and imposto_renda_percentual is not None:
+        taxa_juros_anual = taxa_juros_percentual / 100
+        imposto_renda = imposto_renda_percentual / 100
 
 if submitted:
     erros = []

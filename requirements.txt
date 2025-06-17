@@ -1,4 +1,5 @@
 streamlit
-numpy
 pandas
-XlsxWriter
+numpy
+altair
+xlsxwriter

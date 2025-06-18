@@ -148,17 +148,13 @@ if submitted:
     if not erros and aporte is not None:
         st.markdown("### 🔍 Valores Informados")
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
-
-with col2:
-    st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
-
-with col3:
-    st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
-
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
+        with col2:
+            st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
+        with col3:
+            st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
 
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],

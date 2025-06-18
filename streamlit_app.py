@@ -152,7 +152,7 @@ if not erros and aporte is not None:
     st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
     st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
 
-        _, _, patrimonio = simular_aposentadoria(
+_, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
             dados["taxa_juros_anual"], dados["imposto"]

@@ -159,7 +159,7 @@ _, _, patrimonio = simular_aposentadoria(
         )
 
 anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
-        percentual = int(aporte / dados["renda_atual"] * 100)
+percentual = int(aporte / dados["renda_atual"] * 100)
         patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
 

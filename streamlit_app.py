@@ -221,7 +221,7 @@ if submitted:
                 worksheet.write("A7", "🏦 Poupança necessária", bold)
                 worksheet.write("B7", patrimonio_final, money)
                 worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write_number("B8", anos_aporte)
+                worksheet.write_number("B8", anos_aporte)  # <-- CORRIGIDO AQUI
                 worksheet.write("A9", "📊 % da renda atual", bold)
                 worksheet.write("B9", percentual / 100, percent_fmt)
 

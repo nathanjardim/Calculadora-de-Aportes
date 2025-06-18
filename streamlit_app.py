@@ -221,8 +221,7 @@ if submitted:
                 worksheet.write("A7", "🏦 Poupança necessária", bold)
                 worksheet.write("B7", patrimonio_final, money)
                 worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write("B8", anos_aporte)
-                worksheet.set_column("B8:B8", None)  # Remover formatação de moeda só da célula B8
+                worksheet.write_number("B8", anos_aporte)  # número puro
                 worksheet.write("A9", "📊 % da renda atual", bold)
                 worksheet.write("B9", percentual / 100, percent_fmt)
 
@@ -234,7 +233,7 @@ if submitted:
                     worksheet.write(10, col_num, value, header_format)
 
                 worksheet.set_column("A:A", 10)
-                worksheet.set_column("B:B", 20, money)
+                worksheet.set_column("B11:B100", 20, money)  # moeda só no patrimônio
 
             output.seek(0)
             return output

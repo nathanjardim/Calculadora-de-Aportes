@@ -156,6 +156,9 @@ if submitted:
         with col3:
             st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
 
+        # Espaço após valores informados
+        st.markdown("<br>", unsafe_allow_html=True)
+
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
@@ -182,64 +185,11 @@ if submitted:
             st.markdown("#### 📊 % da renda atual")
             st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
 
+        # Espaço após KPIs
+        st.markdown("<br>", unsafe_allow_html=True)
+
         st.markdown("### 📈 Evolução do Patrimônio")
+
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
-            "Montante": patrimonio
-        })
-        df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
-        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
-
-        chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
-            x=alt.X("Idade", title="Idade", axis=alt.Axis(format=".0f")),
-            y=alt.Y("Montante", title="Patrimônio acumulado", axis=alt.Axis(format=".2s")),
-            tooltip=[
-                alt.Tooltip("Idade", title="Idade", format=".0f"),
-                alt.Tooltip("Montante formatado", title="Montante")
-            ]
-        ).properties(width=700, height=400)
-
-        st.altair_chart(chart, use_container_width=True)
-
-        st.markdown("### 📥 Exportar dados")
-
-        def gerar_excel():
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                workbook = writer.book
-                worksheet = workbook.add_worksheet("Simulação")
-                writer.sheets["Simulação"] = worksheet
-
-                bold = workbook.add_format({'bold': True})
-                money = workbook.add_format({'num_format': 'R$ #,##0'})
-                percent_fmt = workbook.add_format({'num_format': '0%'})
-                header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
-
-                worksheet.write("A6", "💰 Aporte mensal", bold)
-                worksheet.write("B6", aporte_int, money)
-                worksheet.write("A7", "🏦 Poupança necessária", bold)
-                worksheet.write("B7", patrimonio_final, money)
-                worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write("B8", anos_aporte)
-                worksheet.write("A9", "📊 % da renda atual", bold)
-                worksheet.write("B9", percentual / 100, percent_fmt)
-
-                df_export = df_chart[["Idade", "Montante"]]
-                df_export.columns = ["Idade", "Patrimônio"]
-                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
-
-                for col_num, value in enumerate(df_export.columns.values):
-                    worksheet.write(10, col_num, value, header_format)
-
-                worksheet.set_column("A:A", 10)
-                worksheet.set_column("B:B", 20, money)
-
-            output.seek(0)
-            return output
-
-        st.download_button(
-            label="📥 Baixar Excel",
-            data=gerar_excel(),
-            file_name="simulacao_aposentadoria.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            "Montante": patrimoni

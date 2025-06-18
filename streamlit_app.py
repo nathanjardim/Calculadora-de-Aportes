@@ -98,10 +98,8 @@ st.title("Wealth Planning")
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
-    st.caption(f"Você digitou: {formatar_moeda(renda_atual)}")
     idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
     poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
-    st.caption(f"Você digitou: {formatar_moeda(poupanca)}")
 
     st.markdown("### 📊 Dados Econômicos")
     taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
@@ -109,7 +107,6 @@ with st.form("formulario"):
 
     st.markdown("### 🏁 Aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
-    st.caption(f"Você digitou: {formatar_moeda(renda_desejada)}")
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
     expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 

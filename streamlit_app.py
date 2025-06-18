@@ -146,7 +146,7 @@ if submitted:
     for i in informativos:
         st.info(i)
 
-    if not erros and aporte is not None:
+if not erros and aporte is not None:
     st.markdown("### 🔍 Valores Informados")
     st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
     st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")

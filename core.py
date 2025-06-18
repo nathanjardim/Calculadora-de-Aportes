@@ -1,107 +1,159 @@
-import numpy as np
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
 
-def taxa_mensal(taxa_anual):
-    return (1 + taxa_anual) ** (1 / 12) - 1
+import streamlit as st
+st.set_page_config(page_title="Wealth Planning", layout="wide")
 
-def simular_aposentadoria(
-    idade_atual,
-    idade_aposentadoria,
-    expectativa_vida,
-    poupanca_inicial,
-    aporte_mensal,
-    renda_mensal,
-    rentabilidade_anual,
-    imposto,
-):
-    meses_total = (expectativa_vida - idade_atual) * 12
-    meses_aporte = (idade_aposentadoria - idade_atual) * 12
+from core import calcular_aporte, simular_aposentadoria
+import pandas as pd
+import altair as alt
+from io import BytesIO
 
-    saldo = poupanca_inicial
-    rentab_mensal = taxa_mensal(rentabilidade_anual)
-    patrimonio_no_aposentadoria = None
-    historico = []
+def formatar_moeda(valor, decimais=0):
+    return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-    for mes in range(meses_total):
-        saldo *= (1 + rentab_mensal)
-
-        if mes < meses_aporte:
-            saldo += aporte_mensal
+# 🔐 Proteção por senha
+def check_password():
+    def password_entered():
+        if st.session_state["password"] == "sow123":
+            st.session_state["password_correct"] = True
         else:
-            saque_bruto = renda_mensal / (1 - imposto)
-            saldo -= saque_bruto
+            st.session_state["password_correct"] = False
 
-        historico.append(saldo)
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
 
-        if mes == meses_aporte - 1:
-            patrimonio_no_aposentadoria = saldo
+    if not st.session_state["password_correct"]:
+        st.markdown("## 🔒 Área protegida")
+        st.text_input("Digite a senha", type="password", on_change=password_entered, key="password")
+        st.stop()
 
-    return saldo, patrimonio_no_aposentadoria, historico
+check_password()
 
-def determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado):
-    if modo == "zerar":
-        return 0
-    elif modo == "manter":
-        return patrimonio_aposentadoria
-    elif modo == "atingir":
-        return valor_final_desejado or 0
-    else:
-        raise ValueError("Modo inválido. Use 'zerar', 'manter' ou 'atingir'.")
+def verificar_alertas(inputs, aporte_calculado=None):
+    erros, alertas, informativos = [], [], []
+    idade_atual = inputs["idade_atual"]
+    idade_aposentadoria = inputs["idade_aposentadoria"]
+    expectativa_vida = inputs["expectativa_vida"]
+    renda_atual = inputs["renda_atual"]
+    renda_desejada = inputs["renda_desejada"]
+    poupanca = inputs["poupanca"]
+    taxa = inputs["taxa_juros_anual"]
+    imposto = inputs["imposto"]
+    tempo_aporte = idade_aposentadoria - idade_atual
 
-def calcular_aporte(
-    idade_atual,
-    idade_aposentadoria,
-    expectativa_vida,
-    poupanca_inicial,
-    renda_mensal,
-    rentabilidade_anual,
-    imposto,
-    modo,
-    valor_final_desejado=None,
-    renda_atual=None,
-    percentual_de_renda=None,
-    max_aporte=100_000
-):
-    min_aporte = 0
-    tolerancia = 1
-    max_iteracoes = 100
-    iteracoes = 0
+    if idade_atual >= idade_aposentadoria:
+        erros.append("A idade atual deve ser menor que a idade de aposentadoria.")
+    if expectativa_vida <= idade_aposentadoria:
+        erros.append("A expectativa de vida deve ser maior que a idade de aposentadoria.")
+    if renda_atual <= 0:
+        erros.append("Renda atual inválida. Verifique o campo preenchido.")
+    if taxa < 0 or taxa > 1:
+        erros.append("Taxa de juros fora do intervalo permitido. Verifique os parâmetros.")
+    if imposto < 0 or imposto > 1:
+        erros.append("Alíquota de imposto fora do intervalo permitido. Verifique os parâmetros.")
+    if aporte_calculado is not None and aporte_calculado > renda_atual:
+        erros.append("Aporte calculado maior que a renda atual. Verifique os parâmetros.")
+    if taxa > 0.10:
+        alertas.append("Taxa de juros real elevada. Verifique os parâmetros.")
+    if tempo_aporte < 5:
+        alertas.append("Prazo muito curto até a aposentadoria. Verifique os parâmetros.")
+    if tempo_aporte > 50:
+        alertas.append("Prazo muito longo até a aposentadoria. Verifique os parâmetros.")
+    if renda_desejada > 10 * renda_atual:
+        alertas.append("Renda desejada superior à renda atual. Verifique os parâmetros.")
+    if aporte_calculado is not None and aporte_calculado > 0.5 * renda_atual:
+        alertas.append("Aporte elevado em relação à renda. Verifique os parâmetros.")
+    if imposto > 0.275:
+        informativos.append("Imposto acima da alíquota padrão. Confirme o valor informado.")
+    if aporte_calculado is not None and aporte_calculado < 10:
+        informativos.append("Aporte muito baixo detectado. Confirme os parâmetros utilizados.")
+    if poupanca > 0 and aporte_calculado is not None and poupanca > aporte_calculado * tempo_aporte * 12:
+        informativos.append("Poupança inicial superior ao necessário. Verifique os dados.")
+    if renda_desejada == 0:
+        informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
+    return erros, alertas, informativos
 
-    while max_aporte - min_aporte > tolerancia and iteracoes < max_iteracoes:
-        iteracoes += 1
-        teste = (min_aporte + max_aporte) / 2
+st.markdown("""
+    <style>
+    .header {
+        background-color: #123934;
+        padding: 20px 10px;
+        text-align: center;
+    }
+    .header img {
+        max-width: 200px;
+        height: auto;
+    }
+    </style>
+    <div class="header">
+      <img src="https://i.imgur.com/iCRuacp.png" alt="Logo Sow Capital">
+    </div>
+""", unsafe_allow_html=True)
 
-        saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
-            idade_atual,
-            idade_aposentadoria,
-            expectativa_vida,
-            poupanca_inicial,
-            teste,
-            renda_mensal,
-            rentabilidade_anual,
-            imposto,
-        )
+st.title("Wealth Planning")
 
-        alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
+with st.form("formulario"):
+    st.markdown("### 📋 Dados Iniciais")
+    renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
+    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
+    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
 
-        if saldo_final > alvo:
-            max_aporte = teste
-        else:
-            min_aporte = teste
+    st.markdown("### 📊 Dados Econômicos")
+    taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
+    imposto = st.number_input("Alíquota de IR (%)", min_value=0.0, max_value=100.0, value=15.0, format="%.0f")
 
-    # Verificação final: mesmo com aporte máximo o objetivo foi atingido?
-    saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
-        idade_atual,
-        idade_aposentadoria,
-        expectativa_vida,
-        poupanca_inicial,
-        max_aporte,
-        renda_mensal,
-        rentabilidade_anual,
-        imposto,
+    st.markdown("### 🏁 Aposentadoria")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
+    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
+
+    st.markdown("### 🎯 Objetivo Final")
+    modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
+    outro_valor = None
+    if modo == "atingir":
+        outro_valor = st.number_input("Valor alvo (R$)", min_value=0.0, step=10000.0, format="%.0f")
+
+    submitted = st.form_submit_button("📈 Calcular")
+
+if submitted:
+    dados = {
+        "idade_atual": int(idade_atual),
+        "idade_aposentadoria": int(idade_aposentadoria),
+        "expectativa_vida": int(expectativa_vida),
+        "renda_atual": int(renda_atual),
+        "renda_desejada": int(renda_desejada),
+        "poupanca": int(poupanca),
+        "taxa_juros_anual": taxa_juros / 100,
+        "imposto": imposto / 100,
+    }
+
+    resultado = calcular_aporte(
+        dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
+        dados["poupanca"], dados["renda_desejada"], dados["taxa_juros_anual"],
+        dados["imposto"], modo, outro_valor
     )
-    alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
 
-    if saldo_final < alvo - tolerancia:
-        return {"aporte_mensal": None}
+    aporte = resultado.get("aporte_mensal")
+    erros, alertas, informativos = verificar_alertas(dados, aporte)
 
-    return {"aporte_mensal": round((min_aporte + max_aporte) / 2, 2)}
+    for e in erros:
+        st.error(e)
+    for a in alertas:
+        st.warning(a)
+    for i in informativos:
+        st.info(i)
+
+    if not erros and aporte is not None:
+        st.markdown("### 🔍 Valores Informados")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
+        with col2:
+            st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
+        with col3:
+            st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
+        st.markdown("<br>", unsafe_allow_html=True)
+    elif not erros and aporte is None:
+        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")

@@ -13,7 +13,6 @@ from io import BytesIO
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-
 # 🔐 Proteção por senha
 def check_password():
     def password_entered():
@@ -146,21 +145,21 @@ if submitted:
     for i in informativos:
         st.info(i)
 
-if not erros and aporte is not None:
-    st.markdown("### 🔍 Valores Informados")
-    st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
-    st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
-    st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
+    if not erros and aporte is not None:
+        st.markdown("### 🔍 Valores Informados")
+        st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
+        st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
+        st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
 
-_, _, patrimonio = simular_aposentadoria(
+        _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
             dados["taxa_juros_anual"], dados["imposto"]
         )
 
-anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
-percentual = int(aporte / dados["renda_atual"] * 100)
-patrimonio_final = int(patrimonio[(anos_aporte) * 12])
+        anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
+        percentual = int(aporte / dados["renda_atual"] * 100)
+        patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
 
         col1, col2 = st.columns(2)

@@ -247,3 +247,36 @@ if submitted:
 
     elif not erros and aporte is None:
         st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
+
+st.markdown("""
+    <style>
+    .footer {
+        background-color: #123934;
+        padding: 10px 0;
+        color: white;
+        margin-top: 20px;
+        font-size: 14.5px;
+    }
+    .footer-content {
+        text-align: center;
+        max-width: 1100px;
+        margin: auto;
+        line-height: 1.5;
+    }
+    .footer a {
+        color: white;
+        text-decoration: underline;
+    }
+    </style>
+    <div class="footer">
+        <div class="footer-content">
+            <span>
+                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
+                <strong>Email:</strong> ri@sow.capital
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
+                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
+            </span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)

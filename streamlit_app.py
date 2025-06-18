@@ -16,7 +16,24 @@ def formatar_moeda(valor, decimais=0):
 
 # 🔐 Proteção por senha
 def check_password():
-def password_entered():
+    def password_entered():
+        if st.session_state["password"] == "sow123":
+            st.session_state["password_correct"] = True
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
+
+    if not st.session_state["password_correct"]:
+        st.markdown("## 🔒 Área protegida")
+        st.text_input("Digite a senha", type="password", on_change=password_entered, key="password")
+        st.stop()
+
+    if st.session_state["password"] == "sow123":
+        st.session_state["password_correct"] = True
+    else:
+        st.session_state["password_correct"] = False
     if st.session_state["password"] == "sow123":
         st.session_state["password_correct"] = True
     else:
@@ -33,7 +50,49 @@ if not st.session_state["password_correct"]:
 check_password()
 
 def verificar_alertas(inputs, aporte_calculado=None):
-erros, alertas, informativos = [], [], []
+    erros, alertas, informativos = [], [], []
+    idade_atual = inputs["idade_atual"]
+    idade_aposentadoria = inputs["idade_aposentadoria"]
+    expectativa_vida = inputs["expectativa_vida"]
+    renda_atual = inputs["renda_atual"]
+    renda_desejada = inputs["renda_desejada"]
+    poupanca = inputs["poupanca"]
+    taxa = inputs["taxa_juros_anual"]
+    imposto = inputs["imposto"]
+    tempo_aporte = idade_aposentadoria - idade_atual
+
+    if idade_atual >= idade_aposentadoria:
+        erros.append("A idade atual deve ser menor que a idade de aposentadoria.")
+    if expectativa_vida <= idade_aposentadoria:
+        erros.append("A expectativa de vida deve ser maior que a idade de aposentadoria.")
+    if renda_atual <= 0:
+        erros.append("Renda atual inválida. Verifique o campo preenchido.")
+    if taxa < 0 or taxa > 1:
+        erros.append("Taxa de juros fora do intervalo permitido. Verifique os parâmetros.")
+    if imposto < 0 or imposto > 1:
+        erros.append("Alíquota de imposto fora do intervalo permitido. Verifique os parâmetros.")
+    if aporte_calculado is not None and aporte_calculado > renda_atual:
+        erros.append("Aporte calculado maior que a renda atual. Verifique os parâmetros.")
+    if taxa > 0.10:
+        alertas.append("Taxa de juros real elevada. Verifique os parâmetros.")
+    if tempo_aporte < 5:
+        alertas.append("Prazo muito curto até a aposentadoria. Verifique os parâmetros.")
+    if tempo_aporte > 50:
+        alertas.append("Prazo muito longo até a aposentadoria. Verifique os parâmetros.")
+    if renda_desejada > 10 * renda_atual:
+        alertas.append("Renda desejada superior à renda atual. Verifique os parâmetros.")
+    if aporte_calculado is not None and aporte_calculado > 0.5 * renda_atual:
+        alertas.append("Aporte elevado em relação à renda. Verifique os parâmetros.")
+    if imposto > 0.275:
+        informativos.append("Imposto acima da alíquota padrão. Confirme o valor informado.")
+    if aporte_calculado is not None and aporte_calculado < 10:
+        informativos.append("Aporte muito baixo detectado. Confirme os parâmetros utilizados.")
+    if poupanca > 0 and aporte_calculado is not None and poupanca > aporte_calculado * tempo_aporte * 12:
+        informativos.append("Poupança inicial superior ao necessário. Verifique os dados.")
+    if renda_desejada == 0:
+        informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
+    return erros, alertas, informativos
+
 idade_atual = inputs["idade_atual"]
 idade_aposentadoria = inputs["idade_aposentadoria"]
 expectativa_vida = inputs["expectativa_vida"]

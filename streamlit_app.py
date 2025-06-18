@@ -91,7 +91,9 @@ def verificar_alertas(inputs, aporte_calculado=None):
         informativos.append("Poupança inicial superior ao necessário. Verifique os dados.")
     if renda_desejada == 0:
         informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
+
     return erros, alertas, informativos
+
 
 idade_atual = inputs["idade_atual"]
 idade_aposentadoria = inputs["idade_aposentadoria"]

@@ -11,7 +11,7 @@ import altair as alt
 from io import BytesIO
 
 def formatar_moeda(valor, decimais=0):
-return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 # 🔐 Proteção por senha

@@ -188,7 +188,7 @@ st.caption(f"Poupança atual: {formatar_moeda(poupanca)}")
 st.caption(f"Renda desejada: {formatar_moeda(renda_desejada)}")
 
 if st.button("📈 Calcular"):
-dados = {
+    dados = {
     "idade_atual": int(idade_atual),
     "idade_aposentadoria": int(idade_aposentadoria),
     "expectativa_vida": int(expectativa_vida),

@@ -10,6 +10,10 @@ import pandas as pd
 import altair as alt
 from io import BytesIO
 
+def formatar_moeda(valor, decimais=0):
+    return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
 # 🔐 Proteção por senha
 def check_password():
     def password_entered():
@@ -157,10 +161,10 @@ if submitted:
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("#### 💰 Aporte mensal")
-            st.markdown(f"<h3 style='margin-top:0'>R$ {aporte_int:,}".replace(",", "."), unsafe_allow_html=True)
+            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(aporte_int)}</h3>", unsafe_allow_html=True)
 
             st.markdown("#### 🏦 Poupança necessária")
-            st.markdown(f"<h3 style='margin-top:0'>R$ {patrimonio_final:,}".replace(",", "."), unsafe_allow_html=True)
+            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(patrimonio_final)}</h3>", unsafe_allow_html=True)
 
         with col2:
             st.markdown("#### 📆 Anos de aportes")
@@ -175,7 +179,7 @@ if submitted:
             "Montante": patrimonio
         })
         df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
-        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: f"R$ {int(v):,}".replace(",", "."))
+        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
 
         chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
             x=alt.X("Idade", title="Idade", axis=alt.Axis(format=".0f")),
@@ -230,36 +234,3 @@ if submitted:
             file_name="simulacao_aposentadoria.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
-st.markdown("""
-    <style>
-    .footer {
-        background-color: #123934;
-        padding: 10px 0;
-        color: white;
-        margin-top: 20px;
-        font-size: 14.5px;
-    }
-    .footer-content {
-        text-align: center;
-        max-width: 1100px;
-        margin: auto;
-        line-height: 1.5;
-    }
-    .footer a {
-        color: white;
-        text-decoration: underline;
-    }
-    </style>
-    <div class="footer">
-        <div class="footer-content">
-            <span>
-                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Email:</strong> ri@sow.capital
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
-            </span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)

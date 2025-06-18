@@ -146,15 +146,7 @@ if submitted:
         st.info(i)
 
     if not erros and aporte is not None:
-        st.markdown("### 🔍 Valores Informados")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
-        with col2:
-            st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
-        with col3:
-            st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📥 Exportar dados")
 
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
@@ -167,42 +159,11 @@ if submitted:
         patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("#### 💰 Aporte mensal")
-            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(aporte_int)}</h3>", unsafe_allow_html=True)
-            st.markdown("#### 🏦 Poupança necessária")
-            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(patrimonio_final)}</h3>", unsafe_allow_html=True)
-        with col2:
-            st.markdown("#### 📆 Anos de aportes")
-            st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
-            st.markdown("#### 📊 % da renda atual")
-            st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        st.markdown("### 📈 Evolução do Patrimônio")
-
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
         })
-
         df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
-        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
-
-        chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
-            x=alt.X("Idade", title="Idade", axis=alt.Axis(format=".0f")),
-            y=alt.Y("Montante", title="Patrimônio acumulado", axis=alt.Axis(format=".2s")),
-            tooltip=[
-                alt.Tooltip("Idade", title="Idade", format=".0f"),
-                alt.Tooltip("Montante formatado", title="Montante")
-            ]
-        ).properties(width=700, height=400)
-
-        st.altair_chart(chart, use_container_width=True)
-
-        st.markdown("### 📥 Exportar dados")
 
         def gerar_excel():
             output = BytesIO()
@@ -216,24 +177,23 @@ if submitted:
                 percent_fmt = workbook.add_format({'num_format': '0%'})
                 header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-                worksheet.write("A6", "💰 Aporte mensal", bold)
-                worksheet.write("B6", aporte_int, money)
-                worksheet.write("A7", "🏦 Poupança necessária", bold)
-                worksheet.write("B7", patrimonio_final, money)
-                worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write_number("B8", anos_aporte)  # número puro
-                worksheet.write("A9", "📊 % da renda atual", bold)
-                worksheet.write("B9", percentual / 100, percent_fmt)
+                worksheet.write("A3", "💰 Aporte mensal", bold)
+                worksheet.write("B3", aporte_int, money)
+                worksheet.write("A4", "🏦 Poupança necessária", bold)
+                worksheet.write("B4", patrimonio_final, money)
+                worksheet.write("A5", "📆 Anos de aportes", bold)
+                worksheet.write_number("B5", anos_aporte)
+                worksheet.write("A6", "📊 % da renda atual", bold)
+                worksheet.write("B6", percentual / 100, percent_fmt)
 
-                df_export = df_chart[["Idade", "Montante"]]
-                df_export.columns = ["Idade", "Patrimônio"]
-                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
+                worksheet.write("A8", "Idade", header_format)
+                worksheet.write("B8", "Patrimônio", header_format)
 
-                for col_num, value in enumerate(df_export.columns.values):
-                    worksheet.write(10, col_num, value, header_format)
+                for i, row in df_chart.iterrows():
+                    worksheet.write(i + 9, 0, int(row["Idade"]))
+                    worksheet.write(i + 9, 1, row["Montante"], money)
 
-                worksheet.set_column("A:A", 10)
-                worksheet.set_column("B11:B100", 20, money)  # moeda só no patrimônio
+                worksheet.set_column("A:Z", 22)
 
             output.seek(0)
             return output
@@ -244,39 +204,3 @@ if submitted:
             file_name="simulacao_aposentadoria.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
-    elif not erros and aporte is None:
-        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
-
-st.markdown("""
-    <style>
-    .footer {
-        background-color: #123934;
-        padding: 10px 0;
-        color: white;
-        margin-top: 20px;
-        font-size: 14.5px;
-    }
-    .footer-content {
-        text-align: center;
-        max-width: 1100px;
-        margin: auto;
-        line-height: 1.5;
-    }
-    .footer a {
-        color: white;
-        text-decoration: underline;
-    }
-    </style>
-    <div class="footer">
-        <div class="footer-content">
-            <span>
-                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Email:</strong> ri@sow.capital
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
-            </span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)

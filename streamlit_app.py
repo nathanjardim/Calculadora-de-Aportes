@@ -1,20 +1,19 @@
 import sys
 import os
-sys.path.append(os.path.dirname(__file__))  # Garante que o diretório atual está no sys.path
+sys.path.append(os.path.dirname(__file__))
 
 import streamlit as st
-st.set_page_config(page_title="Wealth Planning", layout="wide")  # Configuração da página
+st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 from core import calcular_aporte, simular_aposentadoria
 import pandas as pd
 import altair as alt
 from io import BytesIO
 
-# Formata valores em reais com separadores e casas decimais opcionais
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-# Autenticação simples com senha fixa na sessão
+# 🔐 Proteção por senha
 def check_password():
     def password_entered():
         if st.session_state["password"] == "sow123":
@@ -32,7 +31,6 @@ def check_password():
 
 check_password()
 
-# Validações de entrada com classificações em erros, alertas e informativos
 def verificar_alertas(inputs, aporte_calculado=None):
     erros, alertas, informativos = [], [], []
     idade_atual = inputs["idade_atual"]
@@ -45,7 +43,6 @@ def verificar_alertas(inputs, aporte_calculado=None):
     imposto = inputs["imposto"]
     tempo_aporte = idade_aposentadoria - idade_atual
 
-    # Validações críticas
     if idade_atual >= idade_aposentadoria:
         erros.append("A idade atual deve ser menor que a idade de aposentadoria.")
     if expectativa_vida <= idade_aposentadoria:
@@ -58,8 +55,6 @@ def verificar_alertas(inputs, aporte_calculado=None):
         erros.append("Alíquota de imposto fora do intervalo permitido. Verifique os parâmetros.")
     if aporte_calculado is not None and aporte_calculado > renda_atual:
         erros.append("Aporte calculado maior que a renda atual. Verifique os parâmetros.")
-
-    # Alertas (valores extremos ou fora do padrão)
     if taxa > 0.10:
         alertas.append("Taxa de juros real elevada. Verifique os parâmetros.")
     if tempo_aporte < 5:
@@ -70,8 +65,6 @@ def verificar_alertas(inputs, aporte_calculado=None):
         alertas.append("Renda desejada superior à renda atual. Verifique os parâmetros.")
     if aporte_calculado is not None and aporte_calculado > 0.5 * renda_atual:
         alertas.append("Aporte elevado em relação à renda. Verifique os parâmetros.")
-
-    # Informações úteis mas não críticas
     if imposto > 0.275:
         informativos.append("Imposto acima da alíquota padrão. Confirme o valor informado.")
     if aporte_calculado is not None and aporte_calculado < 10:
@@ -83,7 +76,6 @@ def verificar_alertas(inputs, aporte_calculado=None):
 
     return erros, alertas, informativos
 
-# Cabeçalho com logo
 st.markdown("""
     <style>
     .header {
@@ -103,31 +95,29 @@ st.markdown("""
 
 st.title("Wealth Planning")
 
-# Formulário principal
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", help="Informe sua renda líquida mensal atual."), min_value=0.0, step=100.0, value=10000.0, format="%.0f")
-    idade_atual = st.number_input("Idade atual", help="Sua idade atual em anos completos."), min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
-    poupanca = st.number_input("Poupança atual (R$)", help="Valor disponível atualmente para aposentadoria."), min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
+    renda_atual = st.number_input("Renda atual (R$)", help="Informe sua renda líquida mensal atual.", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
+    idade_atual = st.number_input("Idade atual", help="Sua idade atual em anos completos.", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
+    poupanca = st.number_input("Poupança atual (R$)", help="Valor disponível atualmente para aposentadoria.", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros = st.number_input("Taxa de juros real anual (%)", help="Rentabilidade real esperada ao ano, já descontada a inflação."), min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
-    imposto = st.number_input("Alíquota de IR (%)", help="Percentual de imposto de renda aplicado sobre os saques."), min_value=0.0, max_value=100.0, value=15.0, format="%.0f")
+    taxa_juros = st.number_input("Taxa de juros real anual (%)", help="Rentabilidade real esperada ao ano, já descontada a inflação.", min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
+    imposto = st.number_input("Alíquota de IR (%)", help="Percentual de imposto de renda aplicado sobre os saques.", min_value=0.0, max_value=100.0, value=15.0, format="%.0f")
 
     st.markdown("### 🏁 Aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", help="Quanto você gostaria de receber por mês durante a aposentadoria."), min_value=0.0, step=500.0, value=15000.0, format="%.0f")
-    idade_aposentadoria = st.number_input("Idade para aposentadoria", help="Idade em que você pretende parar de trabalhar."), min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
-    expectativa_vida = st.number_input("Expectativa de vida", help="Expectativa de vida total, em anos."), min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", help="Quanto você gostaria de receber por mês durante a aposentadoria.", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", help="Idade em que você pretende parar de trabalhar.", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
+    expectativa_vida = st.number_input("Expectativa de vida", help="Expectativa de vida total, em anos.", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 
     st.markdown("### 🎯 Objetivo Final")
     modo = st.selectbox("Objetivo com o patrimônio", help="Escolha o que deseja fazer com seu patrimônio ao final da aposentadoria.", ["manter", "zerar", "atingir"])
     outro_valor = None
     if modo == "atingir":
-        outro_valor = st.number_input("Valor alvo (R$)", help="Valor total que você deseja atingir ao final da vida."), min_value=0.0, step=10000.0, format="%.0f")
+        outro_valor = st.number_input("Valor alvo (R$)", help="Valor total que você deseja atingir ao final da vida.", min_value=0.0, step=10000.0, format="%.0f")
 
     submitted = st.form_submit_button("📈 Calcular")
 
-# Processamento após envio
 if submitted:
     dados = {
         "idade_atual": int(idade_atual),
@@ -149,7 +139,6 @@ if submitted:
     aporte = resultado.get("aporte_mensal")
     erros, alertas, informativos = verificar_alertas(dados, aporte)
 
-    # Exibição de mensagens
     for e in erros:
         st.error(e)
     for a in alertas:
@@ -157,7 +146,6 @@ if submitted:
     for i in informativos:
         st.info(i)
 
-    # Exibição dos resultados se não houver erro crítico
     if not erros and aporte is not None:
         st.markdown("### 🔍 Valores Informados")
         col1, col2, col3 = st.columns(3)
@@ -169,7 +157,6 @@ if submitted:
             st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Simulação para gráfico e outputs
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
@@ -193,7 +180,9 @@ if submitted:
             st.markdown("#### 📊 % da renda atual")
             st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
 
-        # Gráfico de evolução do patrimônio
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📈 Evolução do Patrimônio")
+
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
@@ -211,11 +200,10 @@ if submitted:
             ]
         ).properties(width=700, height=400)
 
-        st.markdown("### 📈 Evolução do Patrimônio")
         st.altair_chart(chart, use_container_width=True)
 
-        # Exportação Excel
         st.markdown("### 📥 Exportar dados")
+
         def gerar_excel():
             output = BytesIO()
             with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
@@ -259,7 +247,6 @@ if submitted:
     elif not erros and aporte is None:
         st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
 
-# Rodapé com informações da empresa
 st.markdown("""
     <style>
     .footer {

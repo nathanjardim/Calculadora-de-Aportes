@@ -73,6 +73,7 @@ def verificar_alertas(inputs, aporte_calculado=None):
         informativos.append("Poupança inicial superior ao necessário. Verifique os dados.")
     if renda_desejada == 0:
         informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
+
     return erros, alertas, informativos
 
 st.markdown("""
@@ -180,7 +181,6 @@ if submitted:
             st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-
         st.markdown("### 📈 Evolução do Patrimônio")
 
         df_chart = pd.DataFrame({
@@ -234,8 +234,8 @@ if submitted:
 
                 worksheet.set_column("A:Z", 22)
 
-        output.seek(0)
-        return output
+            output.seek(0)
+            return output
 
         st.download_button(
             label="📥 Baixar Excel",

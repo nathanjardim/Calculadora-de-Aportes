@@ -229,8 +229,8 @@ if submitted:
                 worksheet.write("B6", "Patrimônio", header_format)
 
                 for i, row in df_chart.iterrows():
-                    worksheet.write(i + 7, 0, int(row["Idade"]))
-                    worksheet.write(i + 7, 1, row["Montante"], money)
+                    worksheet.write(i + 6, 0, int(row["Idade"]))
+                    worksheet.write(i + 6, 1, row["Montante"], money)
 
                 worksheet.set_column("A:Z", 22)
 

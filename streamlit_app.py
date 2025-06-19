@@ -149,14 +149,12 @@ if submitted:
         st.markdown("### 🔍 Valores Informados")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown(f"**💰 Aporte mensal:** {formatar_moeda(int(aporte))}")
+            st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
         with col2:
-            st.markdown(f"**🏦 Poupança necessária:** {formatar_moeda(int(resultado.get('aporte_mensal') * 12 * (dados['idade_aposentadoria'] - dados['idade_atual'])))}")
+            st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
         with col3:
-            st.markdown(f"**📆 Anos de aportes:** {dados['idade_aposentadoria'] - dados['idade_atual']}")
-            st.markdown(f"**📊 % da renda atual:** {int(aporte / dados['renda_atual'] * 100)}%")
-
-        st.markdown("### 📈 Evolução do Patrimônio")
+            st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
+        st.markdown("<br>", unsafe_allow_html=True)
 
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
@@ -164,10 +162,32 @@ if submitted:
             dados["taxa_juros_anual"], dados["imposto"]
         )
 
+        anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
+        percentual = int(aporte / dados["renda_atual"] * 100)
+        patrimonio_final = int(patrimonio[(anos_aporte) * 12])
+        aporte_int = int(aporte)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### 💰 Aporte mensal")
+            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(aporte_int)}</h3>", unsafe_allow_html=True)
+            st.markdown("#### 🏦 Poupança necessária")
+            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(patrimonio_final)}</h3>", unsafe_allow_html=True)
+        with col2:
+            st.markdown("#### 📆 Anos de aportes")
+            st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
+            st.markdown("#### 📊 % da renda atual")
+            st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.markdown("### 📈 Evolução do Patrimônio")
+
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
         })
+
         df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
         df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
 
@@ -197,22 +217,23 @@ if submitted:
                 header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
                 worksheet.write("A6", "💰 Aporte mensal", bold)
-                worksheet.write("B6", int(aporte), money)
+                worksheet.write("B6", aporte_int, money)
                 worksheet.write("A7", "🏦 Poupança necessária", bold)
-                worksheet.write("B7", int(patrimonio[(dados["idade_aposentadoria"] - dados["idade_atual"]) * 12]), money)
+                worksheet.write("B7", patrimonio_final, money)
                 worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write("B8", dados["idade_aposentadoria"] - dados["idade_atual"])
+                worksheet.write("B8", anos_aporte)
                 worksheet.write("A9", "📊 % da renda atual", bold)
-                worksheet.write("B9", (aporte / dados["renda_atual"]), percent_fmt)
+                worksheet.write("B9", percentual / 100, percent_fmt)
 
-                worksheet.write("A11", "Idade", header_format)
-                worksheet.write("B11", "Patrimônio", header_format)
+                df_export = df_chart[["Idade", "Montante"]]
+                df_export.columns = ["Idade", "Patrimônio"]
+                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
 
-                for i, row in df_chart.iterrows():
-                    worksheet.write(i + 12, 0, int(row["Idade"]))
-                    worksheet.write(i + 12, 1, row["Montante"], money)
+                for col_num, value in enumerate(df_export.columns.values):
+                    worksheet.write(10, col_num, value, header_format)
 
-                worksheet.set_column("A:Z", 22)
+                worksheet.set_column("A:A", 10)
+                worksheet.set_column("B:B", 20, money)
 
             output.seek(0)
             return output
@@ -226,3 +247,36 @@ if submitted:
 
     elif not erros and aporte is None:
         st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
+
+st.markdown("""
+    <style>
+    .footer {
+        background-color: #123934;
+        padding: 10px 0;
+        color: white;
+        margin-top: 20px;
+        font-size: 14.5px;
+    }
+    .footer-content {
+        text-align: center;
+        max-width: 1100px;
+        margin: auto;
+        line-height: 1.5;
+    }
+    .footer a {
+        color: white;
+        text-decoration: underline;
+    }
+    </style>
+    <div class="footer">
+        <div class="footer-content">
+            <span>
+                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
+                <strong>Email:</strong> ri@sow.capital
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
+                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
+            </span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)

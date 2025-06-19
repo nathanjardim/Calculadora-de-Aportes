@@ -205,37 +205,38 @@ if submitted:
         st.markdown("### 📥 Exportar dados")
 
         def gerar_excel():
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                workbook = writer.book
-                worksheet = workbook.add_worksheet("Simulação")
-                writer.sheets["Simulação"] = worksheet
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        workbook = writer.book
+        worksheet = workbook.add_worksheet("Simulação")
+        writer.sheets["Simulação"] = worksheet
 
-                bold = workbook.add_format({'bold': True})
-                money = workbook.add_format({'num_format': 'R$ #,##0'})
-                percent_fmt = workbook.add_format({'num_format': '0%'})
-                header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
+        bold = workbook.add_format({'bold': True})
+        money = workbook.add_format({'num_format': 'R$ #,##0'})
+        percent_fmt = workbook.add_format({'num_format': '0%'})
+        header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-                worksheet.write("B2", "💰 Aporte mensal", bold)
-                worksheet.write("B3", aporte_int, money)
-                worksheet.write("C2", "🏦 Poupança necessária", bold)
-                worksheet.write("C3", patrimonio_final, money)
-                worksheet.write("D2", "📆 Anos de aportes", bold)
-                worksheet.write("D3", anos_aporte)
-                worksheet.write("E2", "📊 % da renda atual", bold)
-                worksheet.write("E3", percentual / 100, percent_fmt)
+        worksheet.write("B2", "💰 Aporte mensal", bold)
+        worksheet.write("B3", aporte_int, money)
+        worksheet.write("C2", "🏦 Poupança necessária", bold)
+        worksheet.write("C3", patrimonio_final, money)
+        worksheet.write("D2", "📆 Anos de aportes", bold)
+        worksheet.write("D3", anos_aporte)
+        worksheet.write("E2", "📊 % da renda atual", bold)
+        worksheet.write("E3", percentual / 100, percent_fmt)
 
-                df_export = df_chart[["Idade", "Montante"]]
-                df_export.columns = ["Idade", "Patrimônio"]
-                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=6, header=False)
+        worksheet.write("A6", "Idade", header_format)
+        worksheet.write("B6", "Patrimônio", header_format)
 
-                for col_num, value in enumerate(df_export.columns.values):
-                    worksheet.write(5, col_num, value, header_format)
+        for i, row in df_chart.iterrows():
+            worksheet.write(i + 7, 0, int(row["Idade"]))
+            worksheet.write(i + 7, 1, row["Montante"], money)
 
-                worksheet.set_column("A:E", 22)
+        worksheet.set_column("A:Z", 22)
 
-            output.seek(0)
-            return output
+    output.seek(0)
+    return output
+
 
         st.download_button(
             label="📥 Baixar Excel",

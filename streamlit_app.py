@@ -216,14 +216,14 @@ if submitted:
                 percent_fmt = workbook.add_format({'num_format': '0%'})
                 header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-                worksheet.write("A6", "💰 Aporte mensal", bold)
+                worksheet.write("B5", "💰 Aporte mensal", bold)
                 worksheet.write("B6", aporte_int, money)
-                worksheet.write("A7", "🏦 Poupança necessária", bold)
-                worksheet.write("B7", patrimonio_final, money)
-                worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write("B8", anos_aporte)
-                worksheet.write("A9", "📊 % da renda atual", bold)
-                worksheet.write("B9", percentual / 100, percent_fmt)
+                worksheet.write("C5", "🏦 Poupança necessária", bold)
+                worksheet.write("C6", patrimonio_final, money)
+                worksheet.write("D5", "📆 Anos de aportes", bold)
+                worksheet.write("D6", anos_aporte)
+                worksheet.write("E5", "📊 % da renda atual", bold)
+                worksheet.write("E6", percentual / 100, percent_fmt)
 
                 df_export = df_chart[["Idade", "Montante"]]
                 df_export.columns = ["Idade", "Patrimônio"]
@@ -232,8 +232,7 @@ if submitted:
                 for col_num, value in enumerate(df_export.columns.values):
                     worksheet.write(10, col_num, value, header_format)
 
-                worksheet.set_column("A:A", 10)
-                worksheet.set_column("B:B", 20, money)
+                worksheet.set_column("A:E", 22)
 
             output.seek(0)
             return output

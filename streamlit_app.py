@@ -237,8 +237,6 @@ if submitted:
         output.seek(0)
         return output
 
-
-
         st.download_button(
             label="📥 Baixar Excel",
             data=gerar_excel(),

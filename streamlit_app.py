@@ -227,7 +227,7 @@ if submitted:
 
                 df_export = df_chart[["Idade", "Montante"]]
                 df_export.columns = ["Idade", "Patrimônio"]
-                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=7, header=False)
+                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=6, header=False)
 
                 for col_num, value in enumerate(df_export.columns.values):
                     worksheet.write(5, col_num, value, header_format)

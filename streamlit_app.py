@@ -146,6 +146,16 @@ if submitted:
         st.info(i)
 
     if not erros and aporte is not None:
+        st.markdown("### 🔍 Valores Informados")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"**Renda atual:** {formatar_moeda(dados['renda_atual'])}")
+        with col2:
+            st.markdown(f"**Poupança atual:** {formatar_moeda(dados['poupanca'])}")
+        with col3:
+            st.markdown(f"**Renda desejada:** {formatar_moeda(dados['renda_desejada'])}")
+        st.markdown("<br>", unsafe_allow_html=True)
+
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
@@ -157,17 +167,27 @@ if submitted:
         patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
 
-        st.markdown("### 🔍 Valores Informados")
-        st.markdown(f"**💰 Aporte mensal:** {formatar_moeda(aporte_int)}")
-        st.markdown(f"**🏦 Poupança necessária:** {formatar_moeda(patrimonio_final)}")
-        st.markdown(f"**📆 Anos de aportes:** {anos_aporte}")
-        st.markdown(f"**📊 % da renda atual:** {percentual}%")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### 💰 Aporte mensal")
+            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(aporte_int)}</h3>", unsafe_allow_html=True)
+            st.markdown("#### 🏦 Poupança necessária")
+            st.markdown(f"<h3 style='margin-top:0'>{formatar_moeda(patrimonio_final)}</h3>", unsafe_allow_html=True)
+        with col2:
+            st.markdown("#### 📆 Anos de aportes")
+            st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
+            st.markdown("#### 📊 % da renda atual")
+            st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
         st.markdown("### 📈 Evolução do Patrimônio")
+
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
         })
+
         df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
         df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
 
@@ -196,23 +216,24 @@ if submitted:
                 percent_fmt = workbook.add_format({'num_format': '0%'})
                 header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-                worksheet.write("A3", "💰 Aporte mensal", bold)
-                worksheet.write("B3", aporte_int, money)
-                worksheet.write("A4", "🏦 Poupança necessária", bold)
-                worksheet.write("B4", patrimonio_final, money)
-                worksheet.write("A5", "📆 Anos de aportes", bold)
-                worksheet.write_number("B5", anos_aporte)
-                worksheet.write("A6", "📊 % da renda atual", bold)
-                worksheet.write("B6", percentual / 100, percent_fmt)
+                worksheet.write("A6", "💰 Aporte mensal", bold)
+                worksheet.write("B6", aporte_int, money)
+                worksheet.write("A7", "🏦 Poupança necessária", bold)
+                worksheet.write("B7", patrimonio_final, money)
+                worksheet.write("A8", "📆 Anos de aportes", bold)
+                worksheet.write("B8", anos_aporte)
+                worksheet.write("A9", "📊 % da renda atual", bold)
+                worksheet.write("B9", percentual / 100, percent_fmt)
 
-                worksheet.write("A8", "Idade", header_format)
-                worksheet.write("B8", "Patrimônio", header_format)
+                df_export = df_chart[["Idade", "Montante"]]
+                df_export.columns = ["Idade", "Patrimônio"]
+                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
 
-                for i, row in df_chart.iterrows():
-                    worksheet.write(i + 9, 0, int(row["Idade"]))
-                    worksheet.write(i + 9, 1, row["Montante"], money)
+                for col_num, value in enumerate(df_export.columns.values):
+                    worksheet.write(10, col_num, value, header_format)
 
-                worksheet.set_column("A:Z", 22)
+                for col in range(26):  # A até Z
+                    worksheet.set_column(col, col, 22)
 
             output.seek(0)
             return output

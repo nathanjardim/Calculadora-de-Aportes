@@ -1,10 +1,10 @@
 import numpy as np
 
-# Converte uma taxa anual em taxa mensal equivalente
+# Converte taxa anual para taxa mensal equivalente
 def taxa_mensal(taxa_anual):
     return (1 + taxa_anual) ** (1 / 12) - 1
 
-# Simula a evolução do patrimônio até o fim da expectativa de vida
+# Simula a evolução do patrimônio mês a mês até o fim da vida
 def simular_aposentadoria(
     idade_atual,
     idade_aposentadoria,
@@ -15,42 +15,42 @@ def simular_aposentadoria(
     rentabilidade_anual,
     imposto,
 ):
-    meses_total = (expectativa_vida - idade_atual) * 12  # Total de meses simulados
-    meses_aporte = (idade_aposentadoria - idade_atual) * 12  # Período de acumulação (aportes)
+    meses_total = (expectativa_vida - idade_atual) * 12
+    meses_aporte = (idade_aposentadoria - idade_atual) * 12
 
-    saldo = poupanca_inicial  # Valor inicial investido
-    rentab_mensal = taxa_mensal(rentabilidade_anual)  # Rentabilidade mensal equivalente
-    patrimonio_no_aposentadoria = None  # Para armazenar o valor acumulado na aposentadoria
-    historico = []  # Lista para registrar a evolução mês a mês
+    saldo = poupanca_inicial
+    rentab_mensal = taxa_mensal(rentabilidade_anual)
+    patrimonio_no_aposentadoria = None
+    historico = []
 
     for mes in range(meses_total):
-        saldo *= (1 + rentab_mensal)  # Aplicação da rentabilidade mensal
+        saldo *= (1 + rentab_mensal)
 
         if mes < meses_aporte:
-            saldo += aporte_mensal  # Durante a fase de acumulação, soma os aportes
+            saldo += aporte_mensal
         else:
-            saque_bruto = renda_mensal / (1 - imposto)  # Corrige a renda desejada para o valor bruto antes do imposto
-            saldo -= saque_bruto  # Subtrai os saques mensais durante a aposentadoria
+            saque_bruto = renda_mensal / (1 - imposto)
+            saldo -= saque_bruto
 
-        historico.append(saldo)  # Armazena o saldo atual
+        historico.append(saldo)
 
         if mes == meses_aporte - 1:
-            patrimonio_no_aposentadoria = saldo  # Marca o patrimônio acumulado na aposentadoria
+            patrimonio_no_aposentadoria = saldo
 
-    return saldo, patrimonio_no_aposentadoria, historico  # Retorna saldo final, patrimônio na aposentadoria e histórico completo
+    return saldo, patrimonio_no_aposentadoria, historico
 
-# Define qual é o valor-alvo de patrimônio no fim da simulação, de acordo com o modo escolhido
+# Define o valor alvo a ser atingido no final da simulação
 def determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado):
     if modo == "zerar":
-        return 0  # Objetivo é consumir todo o patrimônio
+        return 0
     elif modo == "manter":
-        return patrimonio_aposentadoria  # Objetivo é manter o patrimônio acumulado na aposentadoria
+        return patrimonio_aposentadoria
     elif modo == "atingir":
-        return valor_final_desejado or 0  # Objetivo é atingir um valor específico no final
+        return valor_final_desejado or 0
     else:
         raise ValueError("Modo inválido. Use 'zerar', 'manter' ou 'atingir'.")
 
-# Calcula o aporte necessário para atingir o objetivo de aposentadoria com base em simulações iterativas
+# Calcula o aporte mensal necessário para atingir o objetivo escolhido
 def calcular_aporte(
     idade_atual,
     idade_aposentadoria,
@@ -63,17 +63,17 @@ def calcular_aporte(
     valor_final_desejado=None,
     renda_atual=None,
     percentual_de_renda=None,
-    max_aporte=100_000  # Valor máximo testado como limite superior de aporte
+    max_aporte=100_000
 ):
-    min_aporte = 0  # Valor mínimo testado como limite inferior de aporte
-    tolerancia = 1  # Margem de erro aceitável para convergência
-    max_iteracoes = 100  # Limite de iterações para evitar loop infinito
+    min_aporte = 0
+    tolerancia = 1
+    max_iteracoes = 100
     iteracoes = 0
 
-    # Algoritmo de bisseção para encontrar o aporte necessário
+    # Busca binária para encontrar o aporte ideal
     while max_aporte - min_aporte > tolerancia and iteracoes < max_iteracoes:
         iteracoes += 1
-        teste = (min_aporte + max_aporte) / 2  # Valor intermediário entre os limites
+        teste = (min_aporte + max_aporte) / 2
 
         saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
             idade_atual,
@@ -88,13 +88,12 @@ def calcular_aporte(
 
         alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
 
-        # Ajusta os limites com base no resultado
         if saldo_final > alvo:
             max_aporte = teste
         else:
             min_aporte = teste
 
-    # Validação final: verifica se o objetivo é atingível com o aporte máximo
+    # Verifica se o objetivo é possível mesmo com aporte máximo
     saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
         idade_atual,
         idade_aposentadoria,
@@ -108,7 +107,6 @@ def calcular_aporte(
     alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
 
     if saldo_final < alvo - tolerancia:
-        return {"aporte_mensal": None}  # Objetivo inalcançável mesmo com aporte máximo
+        return {"aporte_mensal": None}
 
-    # Retorna o aporte médio entre os limites finais encontrados
     return {"aporte_mensal": round((min_aporte + max_aporte) / 2, 2)}

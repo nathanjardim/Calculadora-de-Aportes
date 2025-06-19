@@ -146,27 +146,23 @@ if submitted:
         st.info(i)
 
     if not erros and aporte is not None:
+        st.markdown("### 🔍 Valores Informados")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"**💰 Aporte mensal:** {formatar_moeda(int(aporte))}")
+        with col2:
+            st.markdown(f"**🏦 Poupança necessária:** {formatar_moeda(int(resultado.get('aporte_mensal') * 12 * (dados['idade_aposentadoria'] - dados['idade_atual'])))}")
+        with col3:
+            st.markdown(f"**📆 Anos de aportes:** {dados['idade_aposentadoria'] - dados['idade_atual']}")
+            st.markdown(f"**📊 % da renda atual:** {int(aporte / dados['renda_atual'] * 100)}%")
+
+        st.markdown("### 📈 Evolução do Patrimônio")
+
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
             dados["taxa_juros_anual"], dados["imposto"]
         )
-
-        anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
-        percentual = int(aporte / dados["renda_atual"] * 100)
-        patrimonio_final = int(patrimonio[(anos_aporte) * 12])
-        aporte_int = int(aporte)
-
-        st.markdown("### 🔍 Valores Informados")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(f"**💰 Aporte mensal:** {formatar_moeda(aporte_int)}")
-            st.markdown(f"**🏦 Poupança necessária:** {formatar_moeda(patrimonio_final)}")
-        with col2:
-            st.markdown(f"**📆 Anos de aportes:** {anos_aporte}")
-            st.markdown(f"**📊 % da renda atual:** {percentual}%")
-
-        st.markdown("### 📈 Evolução do Patrimônio")
 
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
@@ -201,13 +197,13 @@ if submitted:
                 header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
                 worksheet.write("A6", "💰 Aporte mensal", bold)
-                worksheet.write("B6", aporte_int, money)
+                worksheet.write("B6", int(aporte), money)
                 worksheet.write("A7", "🏦 Poupança necessária", bold)
-                worksheet.write("B7", patrimonio_final, money)
+                worksheet.write("B7", int(patrimonio[(dados["idade_aposentadoria"] - dados["idade_atual"]) * 12]), money)
                 worksheet.write("A8", "📆 Anos de aportes", bold)
-                worksheet.write("B8", anos_aporte)
+                worksheet.write("B8", dados["idade_aposentadoria"] - dados["idade_atual"])
                 worksheet.write("A9", "📊 % da renda atual", bold)
-                worksheet.write("B9", percentual / 100, percent_fmt)
+                worksheet.write("B9", (aporte / dados["renda_atual"]), percent_fmt)
 
                 worksheet.write("A11", "Idade", header_format)
                 worksheet.write("B11", "Patrimônio", header_format)

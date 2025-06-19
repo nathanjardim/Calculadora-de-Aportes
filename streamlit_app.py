@@ -146,8 +146,6 @@ if submitted:
         st.info(i)
 
     if not erros and aporte is not None:
-        st.markdown("### 📥 Exportar dados")
-
         _, _, patrimonio = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, dados["renda_desejada"],
@@ -159,11 +157,32 @@ if submitted:
         patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
 
+        st.markdown("### 🔍 Valores Informados")
+        st.markdown(f"**💰 Aporte mensal:** {formatar_moeda(aporte_int)}")
+        st.markdown(f"**🏦 Poupança necessária:** {formatar_moeda(patrimonio_final)}")
+        st.markdown(f"**📆 Anos de aportes:** {anos_aporte}")
+        st.markdown(f"**📊 % da renda atual:** {percentual}%")
+
+        st.markdown("### 📈 Evolução do Patrimônio")
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
             "Montante": patrimonio
         })
         df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
+        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
+
+        chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
+            x=alt.X("Idade", title="Idade", axis=alt.Axis(format=".0f")),
+            y=alt.Y("Montante", title="Patrimônio acumulado", axis=alt.Axis(format=".2s")),
+            tooltip=[
+                alt.Tooltip("Idade", title="Idade", format=".0f"),
+                alt.Tooltip("Montante formatado", title="Montante")
+            ]
+        ).properties(width=700, height=400)
+
+        st.altair_chart(chart, use_container_width=True)
+
+        st.markdown("### 📥 Exportar dados")
 
         def gerar_excel():
             output = BytesIO()
@@ -204,3 +223,6 @@ if submitted:
             file_name="simulacao_aposentadoria.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+
+    elif not erros and aporte is None:
+        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")

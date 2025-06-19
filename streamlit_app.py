@@ -106,24 +106,24 @@ st.title("Wealth Planning")
 # Formulário principal
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
-    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
-    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
+    renda_atual = st.number_input("Renda atual (R$)", help="Informe sua renda líquida mensal atual."), min_value=0.0, step=100.0, value=10000.0, format="%.0f")
+    idade_atual = st.number_input("Idade atual", help="Sua idade atual em anos completos."), min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
+    poupanca = st.number_input("Poupança atual (R$)", help="Valor disponível atualmente para aposentadoria."), min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
-    imposto = st.number_input("Alíquota de IR (%)", min_value=0.0, max_value=100.0, value=15.0, format="%.0f")
+    taxa_juros = st.number_input("Taxa de juros real anual (%)", help="Rentabilidade real esperada ao ano, já descontada a inflação."), min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
+    imposto = st.number_input("Alíquota de IR (%)", help="Percentual de imposto de renda aplicado sobre os saques."), min_value=0.0, max_value=100.0, value=15.0, format="%.0f")
 
     st.markdown("### 🏁 Aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
-    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
-    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", help="Quanto você gostaria de receber por mês durante a aposentadoria."), min_value=0.0, step=500.0, value=15000.0, format="%.0f")
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", help="Idade em que você pretende parar de trabalhar."), min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
+    expectativa_vida = st.number_input("Expectativa de vida", help="Expectativa de vida total, em anos."), min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 
     st.markdown("### 🎯 Objetivo Final")
-    modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
+    modo = st.selectbox("Objetivo com o patrimônio", help="Escolha o que deseja fazer com seu patrimônio ao final da aposentadoria.", ["manter", "zerar", "atingir"])
     outro_valor = None
     if modo == "atingir":
-        outro_valor = st.number_input("Valor alvo (R$)", min_value=0.0, step=10000.0, format="%.0f")
+        outro_valor = st.number_input("Valor alvo (R$)", help="Valor total que você deseja atingir ao final da vida."), min_value=0.0, step=10000.0, format="%.0f")
 
     submitted = st.form_submit_button("📈 Calcular")
 

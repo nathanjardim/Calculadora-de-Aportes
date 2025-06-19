@@ -216,21 +216,21 @@ if submitted:
                 percent_fmt = workbook.add_format({'num_format': '0%'})
                 header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-                worksheet.write("B5", "💰 Aporte mensal", bold)
-                worksheet.write("B6", aporte_int, money)
-                worksheet.write("C5", "🏦 Poupança necessária", bold)
-                worksheet.write("C6", patrimonio_final, money)
-                worksheet.write("D5", "📆 Anos de aportes", bold)
-                worksheet.write("D6", anos_aporte)
-                worksheet.write("E5", "📊 % da renda atual", bold)
-                worksheet.write("E6", percentual / 100, percent_fmt)
+                worksheet.write("B2", "💰 Aporte mensal", bold)
+                worksheet.write("B3", aporte_int, money)
+                worksheet.write("C2", "🏦 Poupança necessária", bold)
+                worksheet.write("C3", patrimonio_final, money)
+                worksheet.write("D2", "📆 Anos de aportes", bold)
+                worksheet.write("D3", anos_aporte)
+                worksheet.write("E2", "📊 % da renda atual", bold)
+                worksheet.write("E3", percentual / 100, percent_fmt)
 
                 df_export = df_chart[["Idade", "Montante"]]
                 df_export.columns = ["Idade", "Patrimônio"]
-                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=11, header=False)
+                df_export.to_excel(writer, index=False, sheet_name="Simulação", startrow=7, header=False)
 
                 for col_num, value in enumerate(df_export.columns.values):
-                    worksheet.write(10, col_num, value, header_format)
+                    worksheet.write(5, col_num, value, header_format)
 
                 worksheet.set_column("A:E", 22)
 

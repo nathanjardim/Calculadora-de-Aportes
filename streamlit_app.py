@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 
+import core
 from core import calcular_aporte, simular_aposentadoria
 import pandas as pd
 import altair as alt
@@ -90,6 +91,9 @@ if submitted:
         "imposto": dados["imposto"],
         "modo": modo,
     })
+
+    # 🔍 Revela de onde vem o core.py real
+    st.code(core.calcular_aporte.__code__.co_filename, language="python")
 
     resultado = calcular_aporte(
         dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],

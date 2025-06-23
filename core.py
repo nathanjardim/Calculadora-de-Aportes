@@ -74,6 +74,7 @@ def calcular_aporte(
 
     ultimo_saldo_final = None
     ultimo_aporte_valido = None
+    ultimo_alvo = None
 
     while max_aporte - min_aporte > tolerancia and iteracoes < max_iteracoes:
         iteracoes += 1
@@ -102,8 +103,9 @@ def calcular_aporte(
 
         ultimo_saldo_final = saldo_final
         ultimo_aporte_valido = teste
+        ultimo_alvo = alvo
 
-    if ultimo_saldo_final is None or ultimo_saldo_final < alvo - tolerancia:
+    if ultimo_saldo_final is None or ultimo_saldo_final < ultimo_alvo - tolerancia:
         return {"aporte_mensal": None}
 
     return {"aporte_mensal": round(ultimo_aporte_valido, 2)}

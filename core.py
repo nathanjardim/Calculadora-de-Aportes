@@ -1,5 +1,3 @@
-import numpy as np
-
 # Converte taxa anual para taxa mensal equivalente
 def taxa_mensal(taxa_anual):
     return (1 + taxa_anual) ** (1 / 12) - 1
@@ -70,7 +68,13 @@ def calcular_aporte(
     max_iteracoes = 100
     iteracoes = 0
 
-    # Busca binária para encontrar o aporte ideal
+    alvo_constante = None
+    if modo in ["zerar", "atingir"]:
+        alvo_constante = determinar_alvo(modo, 0, valor_final_desejado)
+
+    ultimo_saldo_final = None
+    ultimo_aporte_valido = None
+
     while max_aporte - min_aporte > tolerancia and iteracoes < max_iteracoes:
         iteracoes += 1
         teste = (min_aporte + max_aporte) / 2
@@ -86,27 +90,20 @@ def calcular_aporte(
             imposto,
         )
 
-        alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
+        if modo == "manter":
+            alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
+        else:
+            alvo = alvo_constante
 
         if saldo_final > alvo:
             max_aporte = teste
         else:
             min_aporte = teste
 
-    # Verifica se o objetivo é possível mesmo com aporte máximo
-    saldo_final, patrimonio_aposentadoria, _ = simular_aposentadoria(
-        idade_atual,
-        idade_aposentadoria,
-        expectativa_vida,
-        poupanca_inicial,
-        max_aporte,
-        renda_mensal,
-        rentabilidade_anual,
-        imposto,
-    )
-    alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
+        ultimo_saldo_final = saldo_final
+        ultimo_aporte_valido = teste
 
-    if saldo_final < alvo - tolerancia:
+    if ultimo_saldo_final is None or ultimo_saldo_final < alvo - tolerancia:
         return {"aporte_mensal": None}
 
-    return {"aporte_mensal": round((min_aporte + max_aporte) / 2, 2)}
+    return {"aporte_mensal": round(ultimo_aporte_valido, 2)}

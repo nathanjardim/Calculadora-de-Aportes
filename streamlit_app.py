@@ -108,9 +108,10 @@ with st.form("formulario"):
 
     st.markdown("### 🏁 Aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f", help="Quanto você gostaria de receber por mês durante a aposentadoria.")
+    plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Valor mensal estimado do plano de saúde durante a aposentadoria.")
+    outras_despesas = st.number_input("Outras despesas planejadas (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Outras despesas fixas mensais que você espera ter na aposentadoria.")
     previdencia = st.number_input("Renda com previdência (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Valor mensal que você espera receber de previdência privada após a aposentadoria.")
     aluguel_ou_outras = st.number_input("Aluguel ou outras fontes de renda (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Renda mensal estimada com aluguel ou outras fontes após a aposentadoria.")
-    renda_passiva_total = previdencia + aluguel_ou_outras
 
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f", help="Idade em que você pretende parar de trabalhar.")
     expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f", help="Expectativa de vida total, em anos.")
@@ -124,7 +125,11 @@ with st.form("formulario"):
     submitted = st.form_submit_button("📈 Calcular")
 
 if submitted:
-    renda_liquida = max(renda_desejada - renda_passiva_total, 0)
+    renda_passiva_total = previdencia + aluguel_ou_outras
+    despesas_adicionais = plano_saude + outras_despesas
+    renda_total_desejada = renda_desejada + despesas_adicionais
+    renda_liquida = max(renda_total_desejada - renda_passiva_total, 0)
+
     dados = {
         "idade_atual": int(idade_atual),
         "idade_aposentadoria": int(idade_aposentadoria),

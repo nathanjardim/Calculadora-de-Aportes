@@ -30,26 +30,20 @@ def check_password():
 
 check_password()
 
-def verificar_alertas(inputs, aporte_calculado=None):
-    # (função inalterada)
-    ...
-
-st.markdown("""<style> ... </style>""", unsafe_allow_html=True)
-
 st.title("Wealth Planning")
 
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
-    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
-    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
+    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=35.0, format="%.0f")
+    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=100000.0, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
     taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, format="%.0f")
     imposto = st.number_input("Alíquota de IR (%)", min_value=0.0, max_value=100.0, value=15.0, format="%.0f")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=12000.0, format="%.0f")
     plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
     outras_despesas = st.number_input("Outras despesas planejadas (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
 
@@ -86,7 +80,6 @@ if submitted:
         "imposto": imposto / 100,
     }
 
-    # 🔍 DEBUG AQUI
     st.write("🔍 DEBUG INPUTS:", {
         "idade_atual": dados["idade_atual"],
         "idade_aposentadoria": dados["idade_aposentadoria"],
@@ -104,4 +97,9 @@ if submitted:
         dados["imposto"], modo, outro_valor
     )
 
-    # resto inalterado...
+    aporte = resultado.get("aporte_mensal")
+    if aporte is not None:
+        st.markdown("### 💡 Resultado")
+        st.success(f"Aporte mensal necessário: **{formatar_moeda(aporte)}**")
+    else:
+        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria.")

@@ -30,16 +30,18 @@ def calcular_juros_real_medio():
     fim = hoje.strftime("%d/%m/%Y")
 
     try:
-        df_ipca = buscar_serie_bcb(433, inicio, fim)
-        df_selic = buscar_serie_bcb(1178, inicio, fim)
+        df_ipca = buscar_serie_bcb(433, inicio, fim)    # IPCA mensal
+        df_selic = buscar_serie_bcb(11, inicio, fim)    # Selic mensal efetiva
         df = df_selic.join(df_ipca, lsuffix="_selic", rsuffix="_ipca").dropna()
 
         df["juros_real_mensal"] = ((1 + df["valor_selic"] / 100) / (1 + df["valor_ipca"] / 100)) - 1
+        df = df[(df["juros_real_mensal"] > -0.5) & (df["juros_real_mensal"] < 0.1)]  # remove outliers
+
         media_mensal = df["juros_real_mensal"].mean()
         juros_real_anual = (1 + media_mensal) ** 12 - 1
         return round(juros_real_anual * 100, 2)
     except:
-        return 4.5  # fallback padrão
+        return 4.5  # fallback defensivo
 
 def calcular_juros_real_atual(ipca_pct, selic_pct):
     return round(((1 + selic_pct / 100) / (1 + ipca_pct / 100) - 1) * 100, 2)
@@ -86,15 +88,15 @@ ipca_atual = 4.69
 juros_real_atual = calcular_juros_real_atual(ipca_atual, selic_atual)
 
 with st.form("formulario"):
+    st.markdown("### 📊 Dados Econômicos")
+    st.markdown(f"🔎 Juros real médio (últimos 10 anos): **{juros_real_medio:.2f}% a.a.**")
+    st.markdown(f"📈 Juros real atual (Selic {selic_atual}% e IPCA {ipca_atual}%): **{juros_real_atual:.2f}% a.a.**")
+    taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=min(juros_real_medio, 100.0), format="%.2f", help="Rentabilidade real esperada ao ano, já descontada a inflação. Você pode editar.")
+
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f", help="Informe sua renda líquida mensal atual.")
     idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f", help="Sua idade atual em anos completos.")
     poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f", help="Valor disponível atualmente para aposentadoria.")
-
-    st.markdown("### 📊 Dados Econômicos")
-    st.markdown(f"🔎 Juros real médio (últimos 10 anos): **{juros_real_medio:.2f}% a.a.**")
-    st.markdown(f"📈 Juros real atual (Selic {selic_atual}% e IPCA {ipca_atual}%): **{juros_real_atual:.2f}% a.a.**")
-    taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade real esperada ao ano, já descontada a inflação. Você pode editar.")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f", help="Quanto você gostaria de receber por mês durante a aposentadoria.")
@@ -116,6 +118,7 @@ with st.form("formulario"):
         outro_valor = st.number_input("Valor alvo (R$)", min_value=0.0, step=10000.0, format="%.0f", help="Valor total que você deseja atingir ao final da vida.")
 
     submitted = st.form_submit_button("📈 Calcular")
+
 
 if submitted:
     renda_passiva_total = previdencia + aluguel_ou_outras

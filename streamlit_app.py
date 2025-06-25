@@ -38,7 +38,7 @@ def buscar_serie_bcb(codigo, data_inicial, data_final):
 def calcular_medias_historicas():
     from dateutil.relativedelta import relativedelta
     fim = datetime.today().replace(day=1) - timedelta(days=1)
-    inicio = fim.replace(day=1) - relativedelta(years=4)
+    inicio = fim.replace(day=1) - relativedelta(years=10)
     inicio_str = inicio.strftime("%d/%m/%Y")
     fim_str = fim.strftime("%d/%m/%Y")
 
@@ -169,4 +169,4 @@ if submitted:
         st.success("🎉 Sua poupança atual já é suficiente para atingir o objetivo de aposentadoria. Nenhum aporte mensal é necessário.")
         st.stop()
 
-    # (continua normalmente com gráficos e Excel export...)
+    # Continuação do app (simulação, gráfico, Excel, etc.)

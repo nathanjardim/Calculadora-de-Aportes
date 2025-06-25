@@ -1,5 +1,3 @@
-# streamlit_app.py
-
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
@@ -108,7 +106,6 @@ if submitted:
         st.info(f"🧾 Tributação otimizada: **Tabela {regime.capitalize()}**")
         st.info(f"📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
 
-        anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
         percentual = int(aporte / dados["renda_atual"] * 100)
         patrimonio_final = int(patrimonio[(anos_aporte) * 12])
         aporte_int = int(aporte)
@@ -124,3 +121,65 @@ if submitted:
             st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
             st.markdown("#### 📊 % da renda atual")
             st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
+
+        df_chart = pd.DataFrame({
+            "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
+            "Montante": patrimonio
+        })
+        df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
+        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
+
+        chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
+            x=alt.X("Idade", title="Idade", axis=alt.Axis(format=".0f")),
+            y=alt.Y("Montante", title="Patrimônio acumulado", axis=alt.Axis(format=".2s")),
+            tooltip=[
+                alt.Tooltip("Idade", title="Idade", format=".0f"),
+                alt.Tooltip("Montante formatado", title="Montante")
+            ]
+        ).properties(width=700, height=400)
+
+        st.altair_chart(chart, use_container_width=True)
+
+        def gerar_excel():
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                workbook = writer.book
+                worksheet = workbook.add_worksheet("Simulação")
+                writer.sheets["Simulação"] = worksheet
+
+                bold = workbook.add_format({'bold': True})
+                money = workbook.add_format({'num_format': 'R$ #,##0'})
+                percent_fmt = workbook.add_format({'num_format': '0%'})
+                header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
+
+                worksheet.write("B2", "💰 Aporte mensal", bold)
+                worksheet.write("B3", aporte_int, money)
+                worksheet.write("C2", "🏦 Poupança necessária", bold)
+                worksheet.write("C3", patrimonio_final, money)
+                worksheet.write("D2", "📆 Anos de aportes", bold)
+                worksheet.write("D3", anos_aporte)
+                worksheet.write("E2", "📊 % da renda atual", bold)
+                worksheet.write("E3", percentual / 100, percent_fmt)
+                worksheet.write("F2", "🧾 Tributação", bold)
+                worksheet.write("F3", f"Tabela {regime.capitalize()}")
+                worksheet.write("G2", "📉 Carga efetiva IR", bold)
+                worksheet.write("G3", percentual_ir_efetivo, percent_fmt)
+
+                worksheet.write("A6", "Idade", header_format)
+                worksheet.write("B6", "Patrimônio", header_format)
+
+                for i, row in df_chart.iterrows():
+                    worksheet.write(i + 6, 0, int(row["Idade"]))
+                    worksheet.write(i + 6, 1, row["Montante"], money)
+
+                worksheet.set_column("A:Z", 22)
+
+            output.seek(0)
+            return output
+
+        st.download_button(
+            label="📥 Baixar Excel",
+            data=gerar_excel(),
+            file_name="simulacao_aposentadoria.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )

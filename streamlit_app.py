@@ -158,8 +158,7 @@ if submitted:
         total_sacado = renda_liquida * meses_saque
         percentual_ir_efetivo = total_ir / total_sacado
 
-        st.info(f"🧾 Tributação otimizada: **Tabela {regime.capitalize()}**")
-        st.info(f"📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
+        st.info(f"🧾 Tributação otimizada: **Tabela {regime.capitalize()}** | 📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
 
         percentual = int(aporte / dados["renda_atual"] * 100)
         patrimonio_final = int(patrimonio[(anos_aporte) * 12])

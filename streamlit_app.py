@@ -119,7 +119,6 @@ with st.form("formulario"):
 
     submitted = st.form_submit_button("📈 Calcular")
 
-
 if submitted:
     renda_passiva_total = previdencia + aluguel_ou_outras
     despesas_adicionais = plano_saude + outras_despesas

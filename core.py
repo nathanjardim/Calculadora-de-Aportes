@@ -4,7 +4,7 @@
 def taxa_mensal(taxa_anual):
     return (1 + taxa_anual) ** (1 / 12) - 1
 
-# IR tabela progressiva mensal de 2024
+# IR tabela progressiva mensal (2024)
 def ir_progressivo(valor):
     if valor <= 2112:
         return 0
@@ -17,23 +17,20 @@ def ir_progressivo(valor):
     else:
         return valor * 0.275 - 884.96
 
-# IR tabela regressiva conforme meses desde o aporte
+# IR regressivo realista (FIFO progressivo conforme tempo de saque)
 def ir_regressivo(valor, mes):
-    anos = mes // 12
-    if anos < 2:
-        return valor * 0.35
-    elif anos < 4:
-        return valor * 0.30
-    elif anos < 6:
-        return valor * 0.25
-    elif anos < 8:
-        return valor * 0.20
-    elif anos < 10:
-        return valor * 0.15
-    else:
+    if mes < 60:      # primeiros 5 anos de saque → aportes antigos (25–35 anos atrás)
         return valor * 0.10
+    elif mes < 120:   # anos 5–10 de saque
+        return valor * 0.15
+    elif mes < 180:   # anos 10–15
+        return valor * 0.20
+    elif mes < 240:   # anos 15–20
+        return valor * 0.25
+    else:             # após 20 anos
+        return valor * 0.30
 
-# Simula a evolução do patrimônio mês a mês até o fim da vida com função de IR customizada
+# Simula a evolução do patrimônio mês a mês até o fim da vida com função de IR
 def simular_aposentadoria(
     idade_atual,
     idade_aposentadoria,
@@ -42,7 +39,7 @@ def simular_aposentadoria(
     aporte_mensal,
     renda_mensal,
     rentabilidade_anual,
-    func_ir  # função que calcula IR a cada mês
+    func_ir
 ):
     meses_total = (expectativa_vida - idade_atual) * 12
     meses_aporte = (idade_aposentadoria - idade_atual) * 12
@@ -60,7 +57,7 @@ def simular_aposentadoria(
             saldo += aporte_mensal
         else:
             saque_liquido = renda_mensal
-            saque_bruto_estimado = saque_liquido / 0.85  # chute inicial
+            saque_bruto_estimado = saque_liquido / 0.85
             ir = func_ir(saque_bruto_estimado, mes - meses_aporte)
             saque_bruto = saque_liquido + ir
             saldo -= saque_bruto
@@ -84,7 +81,7 @@ def determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado):
     else:
         raise ValueError("Modo inválido. Use 'zerar', 'manter' ou 'atingir'.")
 
-# Função genérica para calcular aporte com uma função de IR específica
+# Simula bisseção do aporte com IR dinâmico
 def calcular_aporte_com_ir(
     idade_atual,
     idade_aposentadoria,
@@ -107,14 +104,8 @@ def calcular_aporte_com_ir(
         teste = (min_aporte + max_aporte) / 2
 
         saldo_final, patrimonio_aposentadoria, _, _ = simular_aposentadoria(
-            idade_atual,
-            idade_aposentadoria,
-            expectativa_vida,
-            poupanca_inicial,
-            teste,
-            renda_mensal,
-            rentabilidade_anual,
-            func_ir,
+            idade_atual, idade_aposentadoria, expectativa_vida,
+            poupanca_inicial, teste, renda_mensal, rentabilidade_anual, func_ir
         )
 
         alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
@@ -125,14 +116,8 @@ def calcular_aporte_com_ir(
             min_aporte = teste
 
     saldo_final, patrimonio_aposentadoria, _, _ = simular_aposentadoria(
-        idade_atual,
-        idade_aposentadoria,
-        expectativa_vida,
-        poupanca_inicial,
-        max_aporte,
-        renda_mensal,
-        rentabilidade_anual,
-        func_ir,
+        idade_atual, idade_aposentadoria, expectativa_vida,
+        poupanca_inicial, max_aporte, renda_mensal, rentabilidade_anual, func_ir
     )
     alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
 
@@ -140,19 +125,13 @@ def calcular_aporte_com_ir(
         return None, None
 
     aporte_final = round((min_aporte + max_aporte) / 2, 2)
-    _, _, hist, total_ir = simular_aposentadoria(
-        idade_atual,
-        idade_aposentadoria,
-        expectativa_vida,
-        poupanca_inicial,
-        aporte_final,
-        renda_mensal,
-        rentabilidade_anual,
-        func_ir,
+    _, _, _, total_ir = simular_aposentadoria(
+        idade_atual, idade_aposentadoria, expectativa_vida,
+        poupanca_inicial, aporte_final, renda_mensal, rentabilidade_anual, func_ir
     )
     return aporte_final, total_ir
 
-# Calcula o aporte comparando os dois regimes e selecionando o mais vantajoso
+# Função principal: compara regimes e retorna o mais vantajoso
 def calcular_aporte(
     idade_atual,
     idade_aposentadoria,
@@ -160,7 +139,7 @@ def calcular_aporte(
     poupanca_inicial,
     renda_mensal,
     rentabilidade_anual,
-    imposto,  # ignorado agora, mantido para compatibilidade
+    imposto,  # ignorado, mantido por compatibilidade
     modo,
     valor_final_desejado=None,
     renda_atual=None,

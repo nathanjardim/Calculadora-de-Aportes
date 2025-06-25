@@ -14,11 +14,8 @@ st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 st.markdown("""
     <style>
-    @media (min-width: 768px) {
-        .main .block-container {
-            padding-left: 1.25rem !important;
-            padding-right: 1.25rem !important;
-        }
+    .main .block-container {
+        background-color: red !important;
     }
     </style>
 """, unsafe_allow_html=True)

@@ -1,3 +1,5 @@
+# streamlit_app.py
+
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
@@ -5,7 +7,7 @@ sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 
-from core import calcular_aporte, simular_aposentadoria
+from core import calcular_aporte, simular_aposentadoria, ir_progressivo, ir_regressivo
 import pandas as pd
 import altair as alt
 from io import BytesIO
@@ -29,53 +31,6 @@ def check_password():
         st.stop()
 
 check_password()
-
-def verificar_alertas(inputs, aporte_calculado=None):
-    erros, alertas, informativos = [], [], []
-    idade_atual = inputs["idade_atual"]
-    idade_aposentadoria = inputs["idade_aposentadoria"]
-    expectativa_vida = inputs["expectativa_vida"]
-    renda_atual = inputs["renda_atual"]
-    renda_desejada = inputs["renda_desejada"]
-    poupanca = inputs["poupanca"]
-    taxa = inputs["taxa_juros_anual"]
-    imposto = inputs["imposto"]
-    tempo_aporte = idade_aposentadoria - idade_atual
-
-    if idade_atual >= idade_aposentadoria:
-        erros.append("A idade atual deve ser menor que a idade de aposentadoria.")
-    if expectativa_vida <= idade_aposentadoria:
-        erros.append("A expectativa de vida deve ser maior que a idade de aposentadoria.")
-    if renda_atual <= 0:
-        erros.append("Renda atual inválida. Verifique o campo preenchido.")
-    if taxa < 0 or taxa > 1:
-        erros.append("Taxa de juros fora do intervalo permitido. Verifique os parâmetros.")
-    if imposto < 0 or imposto > 1:
-        erros.append("Alíquota de imposto fora do intervalo permitido. Verifique os parâmetros.")
-    if aporte_calculado is not None and aporte_calculado > renda_atual:
-        erros.append("Aporte calculado maior que a renda atual. Verifique os parâmetros.")
-
-    if taxa > 0.10:
-        alertas.append("Taxa de juros real elevada. Verifique os parâmetros.")
-    if tempo_aporte < 5:
-        alertas.append("Prazo muito curto até a aposentadoria. Verifique os parâmetros.")
-    if tempo_aporte > 50:
-        alertas.append("Prazo muito longo até a aposentadoria. Verifique os parâmetros.")
-    if renda_desejada > 10 * renda_atual:
-        alertas.append("Renda desejada superior à renda atual. Verifique os parâmetros.")
-    if aporte_calculado is not None and aporte_calculado > 0.5 * renda_atual:
-        alertas.append("Aporte elevado em relação à renda. Verifique os parâmetros.")
-
-    if imposto > 0.275:
-        informativos.append("Imposto acima da alíquota padrão. Confirme o valor informado.")
-    if aporte_calculado is not None and aporte_calculado < 10:
-        informativos.append("Aporte muito baixo detectado. Confirme os parâmetros utilizados.")
-    if poupanca > 0 and aporte_calculado is not None and poupanca > aporte_calculado * tempo_aporte * 12:
-        informativos.append("Poupança inicial superior ao necessário. Verifique os dados.")
-    if renda_desejada == 0:
-        informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
-
-    return erros, alertas, informativos
 
 st.markdown("""
     <style>
@@ -104,7 +59,6 @@ with st.form("formulario"):
 
     st.markdown("### 📊 Dados Econômicos")
     taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, format="%.0f", help="Rentabilidade real esperada ao ano, já descontada a inflação.")
-    imposto = st.number_input("Alíquota de IR (%)", min_value=0.0, max_value=100.0, value=15.0, format="%.0f", help="Percentual de imposto de renda aplicado sobre os saques.")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f", help="Quanto você gostaria de receber por mês durante a aposentadoria.")
@@ -141,30 +95,26 @@ if submitted:
         "renda_desejada": int(renda_desejada),
         "poupanca": int(poupanca),
         "taxa_juros_anual": taxa_juros / 100,
-        "imposto": imposto / 100,
     }
 
     resultado = calcular_aporte(
         dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
         dados["poupanca"], renda_liquida, dados["taxa_juros_anual"],
-        dados["imposto"], modo, outro_valor
+        imposto=None, modo=modo, valor_final_desejado=outro_valor
     )
 
     aporte = resultado.get("aporte_mensal")
-    erros, alertas, informativos = verificar_alertas(dados, aporte)
+    regime = resultado.get("regime")
 
-    for e in erros:
-        st.error(e)
-    for a in alertas:
-        st.warning(a)
-    for i in informativos:
-        st.info(i)
+    if aporte is None:
+        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
+    else:
+        func_ir_final = (lambda v, m: ir_progressivo(v)) if regime == "progressivo" else ir_regressivo
 
-    if not erros and aporte is not None:
-        _, _, patrimonio = simular_aposentadoria(
+        _, _, patrimonio, _ = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, renda_liquida,
-            dados["taxa_juros_anual"], dados["imposto"]
+            dados["taxa_juros_anual"], func_ir_final
         )
 
         anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
@@ -183,6 +133,8 @@ if submitted:
             st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
             st.markdown("#### 📊 % da renda atual")
             st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
+
+        st.info(f"🧾 Tributação otimizada: **Tabela {regime.capitalize()}**")
 
         df_chart = pd.DataFrame({
             "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
@@ -222,6 +174,8 @@ if submitted:
                 worksheet.write("D3", anos_aporte)
                 worksheet.write("E2", "📊 % da renda atual", bold)
                 worksheet.write("E3", percentual / 100, percent_fmt)
+                worksheet.write("F2", "🧾 Tributação", bold)
+                worksheet.write("F3", f"Tabela {regime.capitalize()}")
 
                 worksheet.write("A6", "Idade", header_format)
                 worksheet.write("B6", "Patrimônio", header_format)
@@ -241,39 +195,3 @@ if submitted:
             file_name="simulacao_aposentadoria.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
-    elif not erros and aporte is None:
-        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
-
-st.markdown("""
-    <style>
-    .footer {
-        background-color: #123934;
-        padding: 10px 0;
-        color: white;
-        margin-top: 20px;
-        font-size: 14.5px;
-    }
-    .footer-content {
-        text-align: center;
-        max-width: 1100px;
-        margin: auto;
-        line-height: 1.5;
-    }
-    .footer a {
-        color: white;
-        text-decoration: underline;
-    }
-    </style>
-    <div class="footer">
-        <div class="footer-content">
-            <span>
-                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Email:</strong> ri@sow.capital
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
-            </span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)

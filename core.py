@@ -17,18 +17,19 @@ def ir_progressivo(valor):
     else:
         return valor * 0.275 - 884.96
 
-# IR regressivo realista (FIFO progressivo conforme tempo de saque)
-def ir_regressivo(valor, mes):
-    if mes < 60:      # primeiros 5 anos de saque → aportes antigos (25–35 anos atrás)
-        return valor * 0.10
-    elif mes < 120:   # anos 5–10 de saque
-        return valor * 0.15
-    elif mes < 180:   # anos 10–15
-        return valor * 0.20
-    elif mes < 240:   # anos 15–20
-        return valor * 0.25
-    else:             # após 20 anos
-        return valor * 0.30
+# IR regressivo contínuo adaptativo com base no tempo de aportes (realista e justo)
+def ir_regressivo(valor, mes, anos_aporte=35):
+    anos_de_saque = mes / 12
+    tempo_medio = anos_aporte - anos_de_saque
+
+    if tempo_medio >= 10:
+        aliquota = 0.10
+    elif tempo_medio <= 0:
+        aliquota = 0.35
+    else:
+        aliquota = 0.35 - (tempo_medio / 10) * 0.25
+
+    return valor * aliquota
 
 # Simula a evolução do patrimônio mês a mês até o fim da vida com função de IR
 def simular_aposentadoria(
@@ -43,6 +44,7 @@ def simular_aposentadoria(
 ):
     meses_total = (expectativa_vida - idade_atual) * 12
     meses_aporte = (idade_aposentadoria - idade_atual) * 12
+    anos_aporte = idade_aposentadoria - idade_atual
 
     saldo = poupanca_inicial
     rentab_mensal = taxa_mensal(rentabilidade_anual)
@@ -58,7 +60,7 @@ def simular_aposentadoria(
         else:
             saque_liquido = renda_mensal
             saque_bruto_estimado = saque_liquido / 0.85
-            ir = func_ir(saque_bruto_estimado, mes - meses_aporte)
+            ir = func_ir(saque_bruto_estimado, mes - meses_aporte, anos_aporte)
             saque_bruto = saque_liquido + ir
             saldo -= saque_bruto
             total_ir_pago += ir
@@ -149,7 +151,7 @@ def calcular_aporte(
     aporte_prog, ir_prog = calcular_aporte_com_ir(
         idade_atual, idade_aposentadoria, expectativa_vida,
         poupanca_inicial, renda_mensal, rentabilidade_anual,
-        modo, lambda v, m: ir_progressivo(v),
+        modo, lambda v, m, a: ir_progressivo(v),
         valor_final_desejado, max_aporte
     )
 

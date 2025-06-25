@@ -4,18 +4,18 @@
 def taxa_mensal(taxa_anual):
     return (1 + taxa_anual) ** (1 / 12) - 1
 
-# IR tabela progressiva mensal (2024)
+# IR tabela progressiva mensal (2024) com segurança contra valores negativos
 def ir_progressivo(valor):
     if valor <= 2112:
         return 0
     elif valor <= 2826.65:
-        return valor * 0.075 - 158.4
+        return max(valor * 0.075 - 158.4, 0)
     elif valor <= 3751.05:
-        return valor * 0.15 - 370.4
+        return max(valor * 0.15 - 370.4, 0)
     elif valor <= 4664.68:
-        return valor * 0.225 - 651.73
+        return max(valor * 0.225 - 651.73, 0)
     else:
-        return valor * 0.275 - 884.96
+        return max(valor * 0.275 - 884.96, 0)
 
 # IR regressivo contínuo adaptativo com base no tempo de aportes (realista e justo)
 def ir_regressivo(valor, mes, anos_aporte=35):

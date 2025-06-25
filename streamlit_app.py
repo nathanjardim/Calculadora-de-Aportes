@@ -30,8 +30,8 @@ def calcular_juros_real_medio():
     fim = hoje.strftime("%d/%m/%Y")
 
     try:
-        df_ipca = buscar_serie_bcb(433, inicio, fim)    # IPCA mensal
-        df_selic = buscar_serie_bcb(11, inicio, fim)    # Selic mensal efetiva
+        df_ipca = buscar_serie_bcb(433, inicio, fim)      # IPCA mensal
+        df_selic = buscar_serie_bcb(4390, inicio, fim)    # Selic efetiva mensal
         df = df_selic.join(df_ipca, lsuffix="_selic", rsuffix="_ipca").dropna()
 
         df["juros_real_mensal"] = ((1 + df["valor_selic"] / 100) / (1 + df["valor_ipca"] / 100)) - 1

@@ -40,16 +40,13 @@ def calcular_medias_historicas():
         df["juros_real_mensal"] = juros_real_mensal
         df = df[(df["juros_real_mensal"] > -0.5) & (df["juros_real_mensal"] < 0.1)]
 
-        media_ipca_anual = (1 + ipca_mensal.mean()) ** 12 - 1
-        media_selic_anual = (1 + selic_mensal.mean()) ** 12 - 1
-        media_juros_real_anual = (1 + df["juros_real_mensal"].mean()) ** 12 - 1
+        media_ipca = (1 + ipca_mensal.mean()) ** 12 - 1
+        media_selic = (1 + selic_mensal.mean()) ** 12 - 1
+        media_juros_real = (1 + df["juros_real_mensal"].mean()) ** 12 - 1
 
-
-        juros_nominal_equivalente = (1 + media_juros_real) * (1 + media_ipca) - 1
-
-        return round(media_selic * 100, 2), round(media_ipca * 100, 2), round(media_juros_real * 100, 2), round(juros_nominal_equivalente * 100, 2)
+        return round(media_selic * 100, 2), round(media_ipca * 100, 2), round(media_juros_real * 100, 2)
     except:
-        return 9.5, 5.0, 4.5, 9.95
+        return 9.5, 5.0, 4.5
 
 def calcular_juros_real_atual(ipca_pct, selic_pct):
     return round(((1 + selic_pct / 100) / (1 + ipca_pct / 100) - 1) * 100, 2)
@@ -90,24 +87,23 @@ st.markdown("""
 
 st.title("Wealth Planning")
 
-selic_media, ipca_media, juros_real_medio, juros_nominal_equivalente = calcular_medias_historicas()
+selic_media, ipca_media, juros_real_medio = calcular_medias_historicas()
 selic_atual = 14.75
 ipca_atual = 4.69
 juros_real_atual = calcular_juros_real_atual(ipca_atual, selic_atual)
 
 with st.form("formulario"):
-    st.markdown("### 📊 Dados Econômicos")
-    st.markdown(f"📈 Selic média histórica (últimos 10 anos): **{selic_media:.2f}% a.a.**")
-    st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
-    st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
-    st.markdown(f"ℹ️ Taxa nominal equivalente considerada: **{juros_nominal_equivalente:.2f}% a.a.**")
-
-    taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade real ao ano, já descontada a inflação. Você pode editar.")
-
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f", help="Informe sua renda líquida mensal atual.")
     idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f", help="Sua idade atual em anos completos.")
     poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f", help="Valor disponível atualmente para aposentadoria.")
+
+    st.markdown("### 📊 Dados Econômicos")
+    st.markdown(f"📈 Selic média histórica (últimos 10 anos): **{selic_media:.2f}% a.a.**")
+    st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
+    st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
+
+    taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade real ao ano, já descontada a inflação. Você pode editar.")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f", help="Quanto você gostaria de receber por mês durante a aposentadoria.")

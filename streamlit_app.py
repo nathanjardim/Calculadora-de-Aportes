@@ -28,7 +28,7 @@ def calcular_medias_historicas():
     hoje = datetime.today().replace(day=1)
     fim = (hoje - timedelta(days=1)).replace(day=1) + timedelta(days=32)
     fim = fim.replace(day=1) - timedelta(days=1)
-    inicio = fim.replace(year=fim.year - 10, day=1)
+    inicio = fim.replace(year=fim.year - 5, day=1)
     inicio_str = inicio.strftime("%d/%m/%Y")
     fim_str = fim.strftime("%d/%m/%Y")
 

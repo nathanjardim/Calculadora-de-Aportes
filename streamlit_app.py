@@ -30,6 +30,23 @@ def check_password():
 
 check_password()
 
+st.markdown("""
+    <style>
+    .header {
+        background-color: #123934;
+        padding: 20px 10px;
+        text-align: center;
+    }
+    .header img {
+        max-width: 200px;
+        height: auto;
+    }
+    </style>
+    <div class="header">
+      <img src="https://i.imgur.com/iCRuacp.png" alt="Logo Sow Capital">
+    </div>
+""", unsafe_allow_html=True)
+
 st.title("Wealth Planning")
 
 with st.form("formulario"):

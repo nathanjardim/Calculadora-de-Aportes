@@ -97,10 +97,10 @@ with st.form("formulario"):
     with col1:
         st.markdown(f"📈 Selic média histórica (últimos 10 anos): **{selic_media:.2f}% a.a.**")
     with col2:
-        st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
+        st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
     col3, col4 = st.columns(2)
     with col3:
-        st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
+        st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
     with col4:
         taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
         

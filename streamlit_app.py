@@ -103,6 +103,26 @@ with st.form("formulario"):
     st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
     st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
 
+    # DEBUG TEMPORÁRIO
+    try:
+        df_ipca = buscar_serie_bcb(433, inicio, fim)
+        df_selic = buscar_serie_bcb(4390, inicio, fim)
+        df = df_selic.join(df_ipca, lsuffix="_selic", rsuffix="_ipca").dropna()
+        ipca_mensal = df["valor_ipca"] / 100
+        selic_mensal = df["valor_selic"] / 100
+        df["juros_real_mensal"] = (1 + selic_mensal) / (1 + ipca_mensal) - 1
+        df_filtrado = df[(df["juros_real_mensal"] > -0.5) & (df["juros_real_mensal"] < 0.1)]
+    
+        st.write("🔍 **DEBUG API**")
+        st.write(f"Meses totais considerados: {len(df)}")
+        st.write(f"Meses após filtro: {len(df_filtrado)}")
+        st.write(f"Juros real mensal bruto: {df['juros_real_mensal'].mean() * 100:.2f}%")
+        st.write(f"Juros real mensal filtrado: {df_filtrado['juros_real_mensal'].mean() * 100:.2f}%")
+        st.write(f"Juros real anual final: {(1 + df_filtrado['juros_real_mensal'].mean())**12 - 1:.2%}")
+    except:
+        st.warning("Erro ao debugar dados da API.")
+
+
     taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade real ao ano, já descontada a inflação. Você pode editar.")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")

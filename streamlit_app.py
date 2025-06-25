@@ -94,15 +94,16 @@ with st.form("formulario"):
 
     st.markdown("### 📊 Dados Econômicos")
     col1, col2 = st.columns(2)
-    with col1:
+        with col1:
         st.markdown(f"📈 Selic média histórica (últimos 10 anos): **{selic_media:.2f}% a.a.**")
     with col2:
-        st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
+        st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
     col3, col4 = st.columns(2)
     with col3:
-        st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
+        st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
     with col4:
         taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
+
         
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")

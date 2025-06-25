@@ -42,14 +42,6 @@ def calcular_medias_historicas():
         juros_real_mensal = (1 + selic_mensal) / (1 + ipca_mensal) - 1
         df["juros_real_mensal"] = juros_real_mensal
 
-        # DEBUG TEMPORÁRIO
-        st.write(df.tail(12))
-        st.write("Média anualizada (juros real):", (1 + df["juros_real_mensal"].mean()) ** 12 - 1)
-
-        media_ipca = (1 + ipca_mensal.mean()) ** 12 - 1
-        media_selic = (1 + selic_mensal.mean()) ** 12 - 1
-        media_juros_real = (1 + df["juros_real_mensal"].mean()) ** 12 - 1
-
         return round(media_selic * 100, 2), round(media_ipca * 100, 2), round(media_juros_real * 100, 2)
     except:
         return 9.5, 5.0, 4.5

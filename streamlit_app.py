@@ -14,12 +14,14 @@ st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 st.markdown("""
     <style>
-    .main .block-container {
-        background-color: red !important;
+    @media (min-width: 768px) {
+        section.main > div {
+            padding-left: 1.25rem !important;
+            padding-right: 1.25rem !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
-
 
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -49,6 +51,10 @@ def calcular_medias_historicas():
         selic_mensal = df["valor_selic"] / 100
         juros_real_mensal = (1 + selic_mensal) / (1 + ipca_mensal) - 1
         df["juros_real_mensal"] = juros_real_mensal
+
+        media_ipca = (1 + ipca_mensal.mean()) ** 12 - 1
+        media_selic = (1 + selic_mensal.mean()) ** 12 - 1
+        media_juros_real = (1 + df["juros_real_mensal"].mean()) ** 12 - 1
 
         return round(media_selic * 100, 2), round(media_ipca * 100, 2), round(media_juros_real * 100, 2)
     except:
@@ -104,7 +110,7 @@ with st.form("formulario"):
     st.markdown("### 📊 Dados Econômicos")
     st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
     taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
-        
+
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
     plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")

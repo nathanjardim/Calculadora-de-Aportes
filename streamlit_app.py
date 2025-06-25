@@ -94,7 +94,7 @@ with st.form("formulario"):
 
     st.markdown("### 📊 Dados Econômicos")
     col1, col2 = st.columns(2)
-        with col1:
+    with col1:
         st.markdown(f"📈 Selic média histórica (últimos 10 anos): **{selic_media:.2f}% a.a.**")
     with col2:
         st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")

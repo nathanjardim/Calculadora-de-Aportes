@@ -14,15 +14,15 @@ st.set_page_config(page_title="Wealth Planning", layout="wide")
 
 st.markdown("""
     <style>
-    /* Reduz margens horizontais no desktop */
     @media (min-width: 768px) {
         .main .block-container {
-            padding-left: 1rem;
-            padding-right: 1rem;
+            padding-left: 1.25rem !important;
+            padding-right: 1.25rem !important;
         }
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")

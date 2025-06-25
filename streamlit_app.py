@@ -17,8 +17,8 @@ st.markdown("""
     /* Reduz margens horizontais no desktop */
     @media (min-width: 768px) {
         .main .block-container {
-            padding-left: 1.5rem;
-            padding-right: 1.5rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
     }
     </style>

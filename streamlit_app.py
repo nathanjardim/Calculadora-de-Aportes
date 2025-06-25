@@ -93,14 +93,8 @@ with st.form("formulario"):
     poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(
-            f"<div style='text-align: center; margin-top: 15px;'>🔎 Juros real médio histórico: <strong>{juros_real_medio:.2f}% a.a.</strong></div>",
-            unsafe_allow_html=True
-        )
-    with col2:
-        taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
+    st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
+    taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
         
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")

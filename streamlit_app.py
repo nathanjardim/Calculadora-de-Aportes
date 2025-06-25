@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(__file__))
 import streamlit as st
 import pandas as pd
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from core import calcular_aporte, simular_aposentadoria, ir_progressivo, ir_regressivo
 import altair as alt
 from io import BytesIO
@@ -25,13 +25,16 @@ def buscar_serie_bcb(codigo, data_inicial, data_final):
     return df.set_index("data").sort_index()
 
 def calcular_medias_historicas():
-    hoje = datetime.today()
-    inicio = hoje.replace(year=hoje.year - 10).strftime("%d/%m/%Y")
-    fim = hoje.strftime("%d/%m/%Y")
+    hoje = datetime.today().replace(day=1)
+    fim = (hoje - timedelta(days=1)).replace(day=1) + timedelta(days=32)
+    fim = fim.replace(day=1) - timedelta(days=1)
+    inicio = fim.replace(year=fim.year - 10, day=1)
+    inicio_str = inicio.strftime("%d/%m/%Y")
+    fim_str = fim.strftime("%d/%m/%Y")
 
     try:
-        df_ipca = buscar_serie_bcb(433, inicio, fim)
-        df_selic = buscar_serie_bcb(4390, inicio, fim)
+        df_ipca = buscar_serie_bcb(433, inicio_str, fim_str)
+        df_selic = buscar_serie_bcb(4390, inicio_str, fim_str)
         df = df_selic.join(df_ipca, lsuffix="_selic", rsuffix="_ipca").dropna()
 
         ipca_mensal = df["valor_ipca"] / 100
@@ -88,61 +91,37 @@ st.markdown("""
 st.title("Wealth Planning")
 
 selic_media, ipca_media, juros_real_medio = calcular_medias_historicas()
-selic_atual = 14.75
-ipca_atual = 4.69
-juros_real_atual = calcular_juros_real_atual(ipca_atual, selic_atual)
 
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f", help="Informe sua renda líquida mensal atual.")
-    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f", help="Sua idade atual em anos completos.")
-    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f", help="Valor disponível atualmente para aposentadoria.")
+    renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
+    idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
+    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
 
     st.markdown("### 📊 Dados Econômicos")
     st.markdown(f"📈 Selic média histórica (últimos 10 anos): **{selic_media:.2f}% a.a.**")
     st.markdown(f"📉 IPCA médio histórico (últimos 10 anos): **{ipca_media:.2f}% a.a.**")
     st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
-
-    # DEBUG TEMPORÁRIO
-    try:
-        df_ipca = buscar_serie_bcb(433, inicio, fim)
-        df_selic = buscar_serie_bcb(4390, inicio, fim)
-        df = df_selic.join(df_ipca, lsuffix="_selic", rsuffix="_ipca").dropna()
-        ipca_mensal = df["valor_ipca"] / 100
-        selic_mensal = df["valor_selic"] / 100
-        df["juros_real_mensal"] = (1 + selic_mensal) / (1 + ipca_mensal) - 1
-        df_filtrado = df[(df["juros_real_mensal"] > -0.5) & (df["juros_real_mensal"] < 0.1)]
-    
-        st.write("🔍 **DEBUG API**")
-        st.write(f"Meses totais considerados: {len(df)}")
-        st.write(f"Meses após filtro: {len(df_filtrado)}")
-        st.write(f"Juros real mensal bruto: {df['juros_real_mensal'].mean() * 100:.2f}%")
-        st.write(f"Juros real mensal filtrado: {df_filtrado['juros_real_mensal'].mean() * 100:.2f}%")
-        st.write(f"Juros real anual final: {(1 + df_filtrado['juros_real_mensal'].mean())**12 - 1:.2%}")
-    except:
-        st.warning("Erro ao debugar dados da API.")
-
-
-    taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade real ao ano, já descontada a inflação. Você pode editar.")
+    taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f", help="Quanto você gostaria de receber por mês durante a aposentadoria.")
-    plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Valor mensal estimado do plano de saúde durante a aposentadoria.")
-    outras_despesas = st.number_input("Outras despesas planejadas (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Outras despesas fixas mensais que você espera ter na aposentadoria.")
+    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
+    plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
+    outras_despesas = st.number_input("Outras despesas planejadas (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
 
     st.markdown("### 💸 Renda passiva estimada")
-    previdencia = st.number_input("Renda com previdência (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Valor mensal que você espera receber de previdência privada após a aposentadoria.")
-    aluguel_ou_outras = st.number_input("Aluguel ou outras fontes de renda (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f", help="Renda mensal estimada com aluguel ou outras fontes após a aposentadoria.")
+    previdencia = st.number_input("Renda com previdência (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
+    aluguel_ou_outras = st.number_input("Aluguel ou outras fontes de renda (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
 
     st.markdown("### 🧓 Dados da aposentadoria")
-    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f", help="Idade em que você pretende parar de trabalhar.")
-    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f", help="Expectativa de vida total, em anos.")
+    idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
+    expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 
     st.markdown("### 🎯 Objetivo Final")
-    modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"], help="Escolha o que deseja fazer com seu patrimônio ao final da aposentadoria.")
+    modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
     outro_valor = None
     if modo == "atingir":
-        outro_valor = st.number_input("Valor alvo (R$)", min_value=0.0, step=10000.0, format="%.0f", help="Valor total que você deseja atingir ao final da vida.")
+        outro_valor = st.number_input("Valor alvo (R$)", min_value=0.0, step=10000.0, format="%.0f")
 
     submitted = st.form_submit_button("📈 Calcular")
 
@@ -172,7 +151,7 @@ if submitted:
     regime = resultado.get("regime")
 
     if aporte is None:
-        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
+        st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria.")
     else:
         func_ir_final = (lambda v, m, a: ir_progressivo(v)) if regime == "progressivo" else ir_regressivo
 

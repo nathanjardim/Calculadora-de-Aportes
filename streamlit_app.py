@@ -12,6 +12,18 @@ from io import BytesIO
 
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 
+st.markdown("""
+    <style>
+    /* Reduz margens horizontais no desktop */
+    @media (min-width: 768px) {
+        .main .block-container {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 

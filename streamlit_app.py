@@ -32,23 +32,6 @@ def check_password():
 
 check_password()
 
-st.markdown("""
-    <style>
-    .header {
-        background-color: #123934;
-        padding: 20px 10px;
-        text-align: center;
-    }
-    .header img {
-        max-width: 200px;
-        height: auto;
-    }
-    </style>
-    <div class="header">
-      <img src="https://i.imgur.com/iCRuacp.png" alt="Logo Sow Capital">
-    </div>
-""", unsafe_allow_html=True)
-
 st.title("Wealth Planning")
 
 with st.form("formulario"):
@@ -109,13 +92,21 @@ if submitted:
     if aporte is None:
         st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria. Tente ajustar a renda desejada, idade ou outros valores.")
     else:
-        func_ir_final = (lambda v, m: ir_progressivo(v)) if regime == "progressivo" else ir_regressivo
+        func_ir_final = (lambda v, m, a: ir_progressivo(v)) if regime == "progressivo" else ir_regressivo
 
-        _, _, patrimonio, _ = simular_aposentadoria(
+        _, _, patrimonio, total_ir = simular_aposentadoria(
             dados["idade_atual"], dados["idade_aposentadoria"], dados["expectativa_vida"],
             dados["poupanca"], aporte, renda_liquida,
             dados["taxa_juros_anual"], func_ir_final
         )
+
+        anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
+        meses_saque = (dados["expectativa_vida"] - dados["idade_aposentadoria"]) * 12
+        total_sacado = renda_liquida * meses_saque
+        percentual_ir_efetivo = total_ir / total_sacado
+
+        st.info(f"🧾 Tributação otimizada: **Tabela {regime.capitalize()}**")
+        st.info(f"📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
 
         anos_aporte = dados["idade_aposentadoria"] - dados["idade_atual"]
         percentual = int(aporte / dados["renda_atual"] * 100)
@@ -133,65 +124,3 @@ if submitted:
             st.markdown(f"<h3 style='margin-top:0'>{anos_aporte} anos</h3>", unsafe_allow_html=True)
             st.markdown("#### 📊 % da renda atual")
             st.markdown(f"<h3 style='margin-top:0'>{percentual}%</h3>", unsafe_allow_html=True)
-
-        st.info(f"🧾 Tributação otimizada: **Tabela {regime.capitalize()}**")
-
-        df_chart = pd.DataFrame({
-            "Idade": [dados["idade_atual"] + i / 12 for i in range(len(patrimonio))],
-            "Montante": patrimonio
-        })
-        df_chart = df_chart[df_chart["Idade"] % 1 == 0].reset_index(drop=True)
-        df_chart["Montante formatado"] = df_chart["Montante"].apply(lambda v: formatar_moeda(v, 0))
-
-        chart = alt.Chart(df_chart).mark_line(interpolate="monotone").encode(
-            x=alt.X("Idade", title="Idade", axis=alt.Axis(format=".0f")),
-            y=alt.Y("Montante", title="Patrimônio acumulado", axis=alt.Axis(format=".2s")),
-            tooltip=[
-                alt.Tooltip("Idade", title="Idade", format=".0f"),
-                alt.Tooltip("Montante formatado", title="Montante")
-            ]
-        ).properties(width=700, height=400)
-
-        st.altair_chart(chart, use_container_width=True)
-
-        def gerar_excel():
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                workbook = writer.book
-                worksheet = workbook.add_worksheet("Simulação")
-                writer.sheets["Simulação"] = worksheet
-
-                bold = workbook.add_format({'bold': True})
-                money = workbook.add_format({'num_format': 'R$ #,##0'})
-                percent_fmt = workbook.add_format({'num_format': '0%'})
-                header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
-
-                worksheet.write("B2", "💰 Aporte mensal", bold)
-                worksheet.write("B3", aporte_int, money)
-                worksheet.write("C2", "🏦 Poupança necessária", bold)
-                worksheet.write("C3", patrimonio_final, money)
-                worksheet.write("D2", "📆 Anos de aportes", bold)
-                worksheet.write("D3", anos_aporte)
-                worksheet.write("E2", "📊 % da renda atual", bold)
-                worksheet.write("E3", percentual / 100, percent_fmt)
-                worksheet.write("F2", "🧾 Tributação", bold)
-                worksheet.write("F3", f"Tabela {regime.capitalize()}")
-
-                worksheet.write("A6", "Idade", header_format)
-                worksheet.write("B6", "Patrimônio", header_format)
-
-                for i, row in df_chart.iterrows():
-                    worksheet.write(i + 6, 0, int(row["Idade"]))
-                    worksheet.write(i + 6, 1, row["Montante"], money)
-
-                worksheet.set_column("A:Z", 22)
-
-            output.seek(0)
-            return output
-
-        st.download_button(
-            label="📥 Baixar Excel",
-            data=gerar_excel(),
-            file_name="simulacao_aposentadoria.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )

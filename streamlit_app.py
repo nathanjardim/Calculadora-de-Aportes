@@ -25,10 +25,9 @@ def buscar_serie_bcb(codigo, data_inicial, data_final):
     return df.set_index("data").sort_index()
 
 def calcular_medias_historicas():
-    hoje = datetime.today().replace(day=1)
-    fim = (hoje - timedelta(days=1)).replace(day=1) + timedelta(days=32)
-    fim = fim.replace(day=1) - timedelta(days=1)
-    inicio = fim.replace(year=fim.year - 3, day=1)
+    from dateutil.relativedelta import relativedelta
+    fim = datetime.today().replace(day=1) - timedelta(days=1)
+    inicio = fim.replace(day=1) - relativedelta(years=10)
     inicio_str = inicio.strftime("%d/%m/%Y")
     fim_str = fim.strftime("%d/%m/%Y")
 

@@ -103,8 +103,7 @@ with st.form("formulario"):
         st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
     with col4:
         taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
-
-        
+    
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
     plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")

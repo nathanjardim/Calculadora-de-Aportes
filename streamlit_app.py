@@ -3,15 +3,46 @@ import os
 sys.path.append(os.path.dirname(__file__))
 
 import streamlit as st
-st.set_page_config(page_title="Wealth Planning", layout="wide")
-
-from core import calcular_aporte, simular_aposentadoria, ir_progressivo, ir_regressivo
 import pandas as pd
+import requests
+from datetime import datetime
+from core import calcular_aporte, simular_aposentadoria, ir_progressivo, ir_regressivo
 import altair as alt
 from io import BytesIO
 
+st.set_page_config(page_title="Wealth Planning", layout="wide")
+
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def buscar_serie_bcb(codigo, data_inicial, data_final):
+    url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={data_inicial}&dataFinal={data_final}"
+    r = requests.get(url)
+    r.raise_for_status()
+    df = pd.DataFrame(r.json())
+    df["valor"] = df["valor"].str.replace(",", ".").astype(float)
+    df["data"] = pd.to_datetime(df["data"], dayfirst=True)
+    return df.set_index("data").sort_index()
+
+def calcular_juros_real_medio():
+    hoje = datetime.today()
+    inicio = hoje.replace(year=hoje.year - 10).strftime("%d/%m/%Y")
+    fim = hoje.strftime("%d/%m/%Y")
+
+    try:
+        df_ipca = buscar_serie_bcb(433, inicio, fim)
+        df_selic = buscar_serie_bcb(1178, inicio, fim)
+        df = df_selic.join(df_ipca, lsuffix="_selic", rsuffix="_ipca").dropna()
+
+        df["juros_real_mensal"] = ((1 + df["valor_selic"] / 100) / (1 + df["valor_ipca"] / 100)) - 1
+        media_mensal = df["juros_real_mensal"].mean()
+        juros_real_anual = (1 + media_mensal) ** 12 - 1
+        return round(juros_real_anual * 100, 2)
+    except:
+        return 4.5  # fallback padrão
+
+def calcular_juros_real_atual(ipca_pct, selic_pct):
+    return round(((1 + selic_pct / 100) / (1 + ipca_pct / 100) - 1) * 100, 2)
 
 def check_password():
     def password_entered():
@@ -49,6 +80,11 @@ st.markdown("""
 
 st.title("Wealth Planning")
 
+juros_real_medio = calcular_juros_real_medio()
+selic_atual = 14.75
+ipca_atual = 4.69
+juros_real_atual = calcular_juros_real_atual(ipca_atual, selic_atual)
+
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
     renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f", help="Informe sua renda líquida mensal atual.")
@@ -56,7 +92,9 @@ with st.form("formulario"):
     poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f", help="Valor disponível atualmente para aposentadoria.")
 
     st.markdown("### 📊 Dados Econômicos")
-    taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=5.0, format="%.0f", help="Rentabilidade real esperada ao ano, já descontada a inflação.")
+    st.markdown(f"🔎 Juros real médio (últimos 10 anos): **{juros_real_medio:.2f}% a.a.**")
+    st.markdown(f"📈 Juros real atual (Selic {selic_atual}% e IPCA {ipca_atual}%): **{juros_real_atual:.2f}% a.a.**")
+    taxa_juros = st.number_input("Taxa de juros real anual (%)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade real esperada ao ano, já descontada a inflação. Você pode editar.")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
     renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f", help="Quanto você gostaria de receber por mês durante a aposentadoria.")

@@ -1,11 +1,15 @@
-# core.py
+from typing import Callable, Optional, Tuple, List
 
-# Converte taxa anual para taxa mensal equivalente
-def taxa_mensal(taxa_anual):
+# ==== UTILITÁRIOS ====
+
+def taxa_mensal(taxa_anual: float) -> float:
+    """Converte uma taxa anual para taxa mensal equivalente."""
     return (1 + taxa_anual) ** (1 / 12) - 1
 
-# IR tabela progressiva mensal (2024) com segurança contra valores negativos
-def ir_progressivo(valor):
+# ==== IMPOSTO DE RENDA ====
+
+def ir_progressivo(valor: float) -> float:
+    """IR pela tabela progressiva mensal (2024), com proteção contra valores negativos."""
     if valor <= 2112:
         return 0
     elif valor <= 2826.65:
@@ -17,8 +21,8 @@ def ir_progressivo(valor):
     else:
         return max(valor * 0.275 - 884.96, 0)
 
-# IR regressivo contínuo adaptativo com base no tempo de aportes (realista e justo)
-def ir_regressivo(valor, mes, anos_aporte=35):
+def ir_regressivo(valor: float, mes: int, anos_aporte: int = 35) -> float:
+    """IR regressivo com base no tempo médio de cada aporte."""
     anos_de_saque = mes / 12
     tempo_medio = anos_aporte - anos_de_saque
 
@@ -27,21 +31,24 @@ def ir_regressivo(valor, mes, anos_aporte=35):
     elif tempo_medio <= 0:
         aliquota = 0.35
     else:
-        aliquota = 0.35 - (tempo_medio / 10) * 0.25
+        aliquota = 0.35 - ((tempo_medio / 10) * 0.25)
 
+    aliquota = max(min(aliquota, 0.35), 0.10)
     return valor * aliquota
 
-# Simula a evolução do patrimônio mês a mês até o fim da vida com função de IR
+# ==== SIMULAÇÃO DE PATRIMÔNIO ====
+
 def simular_aposentadoria(
-    idade_atual,
-    idade_aposentadoria,
-    expectativa_vida,
-    poupanca_inicial,
-    aporte_mensal,
-    renda_mensal,
-    rentabilidade_anual,
-    func_ir
-):
+    idade_atual: int,
+    idade_aposentadoria: int,
+    expectativa_vida: int,
+    poupanca_inicial: float,
+    aporte_mensal: float,
+    renda_mensal: float,
+    rentabilidade_anual: float,
+    funcao_imposto: Callable[[float, int, int], float]
+) -> Tuple[float, float, List[float], float]:
+    """Simula a evolução do patrimônio mês a mês até o fim da vida."""
     meses_total = (expectativa_vida - idade_atual) * 12
     meses_aporte = (idade_aposentadoria - idade_atual) * 12
     anos_aporte = idade_aposentadoria - idade_atual
@@ -60,7 +67,7 @@ def simular_aposentadoria(
         else:
             saque_liquido = renda_mensal
             saque_bruto_estimado = saque_liquido / 0.85
-            ir = func_ir(saque_bruto_estimado, mes - meses_aporte, anos_aporte)
+            ir = funcao_imposto(saque_bruto_estimado, mes - meses_aporte, anos_aporte)
             saque_bruto = saque_liquido + ir
             saldo -= saque_bruto
             total_ir_pago += ir
@@ -72,8 +79,14 @@ def simular_aposentadoria(
 
     return saldo, patrimonio_no_aposentadoria, historico, total_ir_pago
 
-# Define o valor alvo a ser atingido no final da simulação
-def determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado):
+# ==== OBJETIVO FINAL ====
+
+def determinar_alvo(
+    modo: str,
+    patrimonio_aposentadoria: float,
+    valor_final_desejado: Optional[float]
+) -> float:
+    """Determina o valor alvo no final da simulação."""
     if modo == "zerar":
         return 0
     elif modo == "manter":
@@ -83,19 +96,21 @@ def determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado):
     else:
         raise ValueError("Modo inválido. Use 'zerar', 'manter' ou 'atingir'.")
 
-# Simula bisseção do aporte com IR dinâmico
+# ==== BISSERÇÃO DO APORTE ====
+
 def calcular_aporte_com_ir(
-    idade_atual,
-    idade_aposentadoria,
-    expectativa_vida,
-    poupanca_inicial,
-    renda_mensal,
-    rentabilidade_anual,
-    modo,
-    func_ir,
-    valor_final_desejado=None,
-    max_aporte=100_000
-):
+    idade_atual: int,
+    idade_aposentadoria: int,
+    expectativa_vida: int,
+    poupanca_inicial: float,
+    renda_mensal: float,
+    rentabilidade_anual: float,
+    modo: str,
+    funcao_imposto: Callable[[float, int, int], float],
+    valor_final_desejado: Optional[float] = None,
+    max_aporte: float = 100_000
+) -> Tuple[Optional[float], Optional[float]]:
+    """Aplica bisseção para encontrar o menor aporte mensal necessário com IR aplicado."""
     min_aporte = 0
     tolerancia = 1
     max_iteracoes = 100
@@ -103,75 +118,80 @@ def calcular_aporte_com_ir(
 
     while max_aporte - min_aporte > tolerancia and iteracoes < max_iteracoes:
         iteracoes += 1
-        teste = (min_aporte + max_aporte) / 2
+        aporte_teste = (min_aporte + max_aporte) / 2
 
         saldo_final, patrimonio_aposentadoria, _, _ = simular_aposentadoria(
             idade_atual, idade_aposentadoria, expectativa_vida,
-            poupanca_inicial, teste, renda_mensal, rentabilidade_anual, func_ir
+            poupanca_inicial, aporte_teste, renda_mensal, rentabilidade_anual, funcao_imposto
         )
 
         alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
 
         if saldo_final > alvo:
-            max_aporte = teste
+            max_aporte = aporte_teste
         else:
-            min_aporte = teste
+            min_aporte = aporte_teste
 
+    aporte_final = round((min_aporte + max_aporte) / 2, 2)
     saldo_final, patrimonio_aposentadoria, _, _ = simular_aposentadoria(
         idade_atual, idade_aposentadoria, expectativa_vida,
-        poupanca_inicial, max_aporte, renda_mensal, rentabilidade_anual, func_ir
+        poupanca_inicial, aporte_final, renda_mensal, rentabilidade_anual, funcao_imposto
     )
     alvo = determinar_alvo(modo, patrimonio_aposentadoria, valor_final_desejado)
 
     if saldo_final < alvo - tolerancia:
         return None, None
 
-    aporte_final = round((min_aporte + max_aporte) / 2, 2)
     _, _, _, total_ir = simular_aposentadoria(
         idade_atual, idade_aposentadoria, expectativa_vida,
-        poupanca_inicial, aporte_final, renda_mensal, rentabilidade_anual, func_ir
+        poupanca_inicial, aporte_final, renda_mensal, rentabilidade_anual, funcao_imposto
     )
     return aporte_final, total_ir
 
-# Função principal: compara regimes e retorna o mais vantajoso
+# ==== COMPARAÇÃO ENTRE REGIMES ====
+
+def selecionar_melhor_regime(
+    prog: Optional[Tuple[float, float]],
+    regr: Optional[Tuple[float, float]]
+) -> dict:
+    """Compara os dois regimes e retorna o mais vantajoso."""
+    if prog is None and regr is None:
+        return {"aporte_mensal": None}
+    if prog is None:
+        return {"aporte_mensal": regr[0], "regime": "regressivo"}
+    if regr is None:
+        return {"aporte_mensal": prog[0], "regime": "progressivo"}
+    return {"aporte_mensal": prog[0], "regime": "progressivo"} if prog[0] < regr[0] else {"aporte_mensal": regr[0], "regime": "regressivo"}
+
+# ==== FUNÇÃO PRINCIPAL ====
+
 def calcular_aporte(
-    idade_atual,
-    idade_aposentadoria,
-    expectativa_vida,
-    poupanca_inicial,
-    renda_mensal,
-    rentabilidade_anual,
-    imposto,  # ignorado, mantido por compatibilidade
-    modo,
-    valor_final_desejado=None,
-    renda_atual=None,
-    percentual_de_renda=None,
-    max_aporte=100_000
-):
-    aporte_prog, ir_prog = calcular_aporte_com_ir(
+    idade_atual: int,
+    idade_aposentadoria: int,
+    expectativa_vida: int,
+    poupanca_inicial: float,
+    renda_mensal: float,
+    rentabilidade_anual: float,
+    imposto=None,  # mantido por compatibilidade
+    modo: str = "manter",
+    valor_final_desejado: Optional[float] = None,
+    renda_atual: Optional[float] = None,
+    percentual_de_renda: Optional[float] = None,
+    max_aporte: float = 100_000
+) -> dict:
+    """Calcula o aporte ideal comparando regimes progressivo e regressivo de IR."""
+    resultado_prog = calcular_aporte_com_ir(
         idade_atual, idade_aposentadoria, expectativa_vida,
         poupanca_inicial, renda_mensal, rentabilidade_anual,
         modo, lambda v, m, a: ir_progressivo(v),
         valor_final_desejado, max_aporte
     )
 
-    aporte_regr, ir_regr = calcular_aporte_com_ir(
+    resultado_regr = calcular_aporte_com_ir(
         idade_atual, idade_aposentadoria, expectativa_vida,
         poupanca_inicial, renda_mensal, rentabilidade_anual,
         modo, ir_regressivo,
         valor_final_desejado, max_aporte
     )
 
-    if aporte_prog is None and aporte_regr is None:
-        return {"aporte_mensal": None}
-
-    if aporte_prog is None:
-        return {"aporte_mensal": aporte_regr, "regime": "regressivo"}
-
-    if aporte_regr is None:
-        return {"aporte_mensal": aporte_prog, "regime": "progressivo"}
-
-    if aporte_prog < aporte_regr:
-        return {"aporte_mensal": aporte_prog, "regime": "progressivo"}
-    else:
-        return {"aporte_mensal": aporte_regr, "regime": "regressivo"}
+    return selecionar_melhor_regime(resultado_prog, resultado_regr)

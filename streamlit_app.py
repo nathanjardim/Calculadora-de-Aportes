@@ -96,38 +96,47 @@ def calcular_percentual_ir(total_ir, renda_liquida, expectativa_vida, idade_apos
     total_sacado = renda_liquida * meses_saque
     return total_ir / total_sacado if total_sacado > 0 else 0
 
-def gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual, regime, percentual_ir_efetivo):
+def gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual, regime, percentual_ir_efetivo, parametros):
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         workbook = writer.book
-        worksheet = workbook.add_worksheet("Simulação")
-        writer.sheets["Simulação"] = worksheet
 
+        # Simulação
+        ws1 = workbook.add_worksheet("Simulação")
+        writer.sheets["Simulação"] = ws1
         money = workbook.add_format({'num_format': 'R$ #,##0'})
         percent_fmt = workbook.add_format({'num_format': '0%'})
         header_format = workbook.add_format({'bold': True, 'bg_color': '#123934', 'font_color': 'white'})
 
-        worksheet.write("B2", "💰 Aporte mensal")
-        worksheet.write("B3", aporte_int, money)
-        worksheet.write("C2", "🏦 Poupança necessária")
-        worksheet.write("C3", patrimonio_final, money)
-        worksheet.write("D2", "📆 Anos de aportes")
-        worksheet.write("D3", anos_aporte)
-        worksheet.write("E2", "📊 % da renda atual")
-        worksheet.write("E3", percentual / 100, percent_fmt)
-        worksheet.write("F2", "🧾 Tributação")
-        worksheet.write("F3", f"Tabela {regime.capitalize()}")
-        worksheet.write("G2", "📉 Carga efetiva IR")
-        worksheet.write("G3", percentual_ir_efetivo, percent_fmt)
+        ws1.write("B2", "💰 Aporte mensal")
+        ws1.write("B3", aporte_int, money)
+        ws1.write("C2", "🏦 Poupança necessária")
+        ws1.write("C3", patrimonio_final, money)
+        ws1.write("D2", "📆 Anos de aportes")
+        ws1.write("D3", anos_aporte)
+        ws1.write("E2", "📊 % da renda atual")
+        ws1.write("E3", percentual / 100, percent_fmt)
+        ws1.write("F2", "🧾 Tributação")
+        ws1.write("F3", f"Tabela {regime.capitalize()}")
+        ws1.write("G2", "📉 Carga efetiva IR")
+        ws1.write("G3", percentual_ir_efetivo, percent_fmt)
 
-        worksheet.write("A6", "Idade", header_format)
-        worksheet.write("B6", "Patrimônio", header_format)
+        ws1.write("A6", "Idade", header_format)
+        ws1.write("B6", "Patrimônio", header_format)
 
         for i, row in df_chart.iterrows():
-            worksheet.write(i + 6, 0, int(row["Idade"]))
-            worksheet.write(i + 6, 1, row["Montante"], money)
+            ws1.write(i + 6, 0, int(row["Idade"]))
+            ws1.write(i + 6, 1, row["Montante"], money)
+        ws1.set_column("A:Z", 22)
 
-        worksheet.set_column("A:Z", 22)
+        # Parâmetros
+        ws2 = workbook.add_worksheet("Parametros")
+        writer.sheets["Parametros"] = ws2
+        for i, (chave, valor) in enumerate(parametros.items()):
+            ws2.write(i, 0, chave)
+            ws2.write(i, 1, valor)
+        ws2.set_column("A:B", 30)
+
     output.seek(0)
     return output
 
@@ -150,31 +159,40 @@ selic_media, ipca_media, juros_real_medio = calcular_medias_historicas()
 
 st.markdown("### 📋 Dados Iniciais")
 renda_atual = campo_monetario("Renda atual (R$)", "10.000")
-idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f", help="Idade atual da pessoa que está simulando.")
+idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
 poupanca = campo_monetario("Poupança atual (R$)", "50.000")
+
+st.divider()
 
 st.markdown("### 📊 Dados Econômicos")
 st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
-taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f", help="Rentabilidade anual real esperada após inflação.")
+taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
+
+st.divider()
 
 st.markdown("### 🧾 Renda desejada na aposentadoria")
 renda_desejada = campo_monetario("Renda mensal desejada (R$)", "15.000")
 plano_saude = campo_monetario("Plano de saúde (R$)", "0")
 outras_despesas = campo_monetario("Outras despesas planejadas (R$)", "0")
 
+st.divider()
+
 st.markdown("### 💸 Renda passiva estimada")
 previdencia = campo_monetario("Renda com previdência (R$)", "0")
 aluguel_ou_outras = campo_monetario("Aluguel ou outras fontes de renda (R$)", "0")
 
+st.divider()
+
 st.markdown("### 🧓 Dados da aposentadoria")
-idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f", help="Idade planejada para se aposentar.")
-expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f", help="Expectativa de vida da pessoa.")
+idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=idade_atual + 1, max_value=100.0, value=65.0, format="%.0f")
+expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
+
+st.divider()
 
 st.markdown("### 🎯 Objetivo Final")
 modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
 outro_valor = campo_monetario("Valor alvo (R$)", "0") if modo == "atingir" else None
 
-# botão de execução
 if st.button("📈 Calcular"):
     renda_passiva_total = previdencia + aluguel_ou_outras
     despesas_adicionais = plano_saude + outras_despesas
@@ -239,9 +257,25 @@ if st.button("📈 Calcular"):
     ).properties(width=700, height=400)
     st.altair_chart(chart, use_container_width=True)
 
+    parametros = {
+        "Idade atual": idade_atual,
+        "Idade aposentadoria": idade_aposentadoria,
+        "Expectativa de vida": expectativa_vida,
+        "Renda atual": renda_atual,
+        "Renda desejada": renda_desejada,
+        "Plano de saúde": plano_saude,
+        "Outras despesas": outras_despesas,
+        "Renda passiva previdência": previdencia,
+        "Renda passiva aluguel": aluguel_ou_outras,
+        "Poupança atual": poupanca,
+        "Taxa real esperada": taxa_juros,
+        "Objetivo": modo,
+        "Valor alvo (atingir)": outro_valor or 0,
+    }
+
     st.download_button(
         label="📥 Baixar Excel",
-        data=gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual, regime, percentual_ir_efetivo),
+        data=gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual, regime, percentual_ir_efetivo, parametros),
         file_name="simulacao_aposentadoria.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )

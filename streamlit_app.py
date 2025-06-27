@@ -9,8 +9,6 @@ from datetime import datetime, timedelta
 from core import calcular_aporte, simular_aposentadoria, ir_progressivo, ir_regressivo
 import altair as alt
 from io import BytesIO
-import locale
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 
@@ -128,7 +126,7 @@ with st.form("formulario"):
     previdencia = texto_para_numero(st.text_input("Renda com previdência (R$)", value="0,00"))
     aluguel_ou_outras = texto_para_numero(st.text_input("Aluguel ou outras fontes de renda (R$)", value="0,00"))
 
-    st.markdown("### 🤿 Dados da aposentadoria")
+    st.markdown("### 🧓 Dados da aposentadoria")
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=0.0, max_value=100.0, value=65.0, format="%.0f")
     expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 
@@ -194,7 +192,7 @@ if submitted:
     total_sacado = renda_liquida * meses_saque
     percentual_ir_efetivo = total_ir / total_sacado
 
-    st.info(f"🧾 Tributção otimizada: **Tabela {'Regressiva' if regime == 'regressivo' else 'Progressiva'}** | 📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
+    st.info(f"🧾 Tributação otimizada: **Tabela {'Regressiva' if regime == 'regressivo' else 'Progressiva'}** | 📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
 
     percentual = int(aporte / dados["renda_atual"] * 100)
     patrimonio_final = int(patrimonio[(anos_aporte) * 12])
@@ -250,7 +248,7 @@ if submitted:
             worksheet.write("D3", anos_aporte)
             worksheet.write("E2", "📊 % da renda atual", bold)
             worksheet.write("E3", percentual / 100, percent_fmt)
-            worksheet.write("F2", "🧾 Tributção", bold)
+            worksheet.write("F2", "🧾 Tributação", bold)
             worksheet.write("F3", f"Tabela {regime.capitalize()}")
             worksheet.write("G2", "📉 Carga efetiva IR", bold)
             worksheet.write("G3", percentual_ir_efetivo, percent_fmt)
@@ -268,7 +266,7 @@ if submitted:
         return output
 
     st.download_button(
-        label="📅 Baixar Excel",
+        label="📥 Baixar Excel",
         data=gerar_excel(),
         file_name="simulacao_aposentadoria.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

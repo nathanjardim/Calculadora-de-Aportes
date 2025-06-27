@@ -101,7 +101,6 @@ def gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual,
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         workbook = writer.book
 
-        # Simulação
         ws1 = workbook.add_worksheet("Simulação")
         writer.sheets["Simulação"] = ws1
         money = workbook.add_format({'num_format': 'R$ #,##0'})
@@ -129,7 +128,6 @@ def gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual,
             ws1.write(i + 6, 1, row["Montante"], money)
         ws1.set_column("A:Z", 22)
 
-        # Parâmetros
         ws2 = workbook.add_worksheet("Parametros")
         writer.sheets["Parametros"] = ws2
         for i, (chave, valor) in enumerate(parametros.items()):
@@ -140,8 +138,39 @@ def gerar_excel(df_chart, aporte_int, patrimonio_final, anos_aporte, percentual,
     output.seek(0)
     return output
 
-# === INTERFACE ===
+def verificar_mensagens(idade_atual, idade_aposentadoria, expectativa_vida, renda_atual, taxa_juros, renda_desejada, aporte):
+    erros, alertas, informativos = [], [], []
+    tempo_aporte = idade_aposentadoria - idade_atual
 
+    if idade_atual >= idade_aposentadoria:
+        erros.append("A idade atual deve ser menor que a idade de aposentadoria.")
+    if expectativa_vida <= idade_aposentadoria:
+        erros.append("A expectativa de vida deve ser maior que a idade de aposentadoria.")
+    if renda_atual <= 0:
+        erros.append("Renda atual inválida. Verifique o campo preenchido.")
+    if taxa_juros < 0 or taxa_juros > 1:
+        erros.append("Taxa de juros fora do intervalo permitido. Verifique os parâmetros.")
+    if aporte is not None and aporte > renda_atual:
+        erros.append("Aporte calculado maior que a renda atual. Verifique os parâmetros.")
+
+    if taxa_juros > 0.10:
+        alertas.append("Taxa de juros real elevada. Verifique os parâmetros.")
+    if tempo_aporte < 5:
+        alertas.append("Prazo muito curto até a aposentadoria. Verifique os parâmetros.")
+    if tempo_aporte > 50:
+        alertas.append("Prazo muito longo até a aposentadoria. Verifique os parâmetros.")
+    if renda_desejada > 10 * renda_atual:
+        alertas.append("Renda desejada superior à renda atual. Verifique os parâmetros.")
+    if aporte is not None and aporte > 0.5 * renda_atual:
+        alertas.append("Aporte elevado em relação à renda. Verifique os parâmetros.")
+    if renda_desejada == 0:
+        informativos.append("Renda desejada igual a zero. Verifique os parâmetros.")
+    if aporte is not None and aporte < 10:
+        informativos.append("Aporte muito baixo detectado. Confirme os parâmetros utilizados.")
+
+    return erros, alertas, informativos
+
+# === INTERFACE ===
 def check_password():
     def password_entered():
         st.session_state["password_correct"] = st.session_state.get("password") == "sow123"
@@ -206,6 +235,23 @@ if st.button("📈 Calcular"):
 
     aporte = resultado.get("aporte_mensal")
     regime = resultado.get("regime")
+
+    erros, alertas, informativos = verificar_mensagens(
+        idade_atual=int(idade_atual),
+        idade_aposentadoria=int(idade_aposentadoria),
+        expectativa_vida=int(expectativa_vida),
+        renda_atual=renda_atual,
+        taxa_juros=taxa_juros / 100,
+        renda_desejada=renda_desejada,
+        aporte=aporte
+    )
+
+    for msg in erros:
+        st.error(msg)
+    for msg in alertas:
+        st.warning(msg)
+    for msg in informativos:
+        st.info(msg)
 
     if aporte is None:
         st.warning("Com os parâmetros informados, não é possível atingir o objetivo de aposentadoria.")

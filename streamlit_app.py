@@ -227,6 +227,26 @@ if st.button("📈 Calcular"):
     despesas_adicionais = plano_saude + outras_despesas
     renda_liquida = max(renda_desejada + despesas_adicionais - renda_passiva_total, 0)
 
+    erros, alertas, informativos = verificar_mensagens(
+        idade_atual=int(idade_atual),
+        idade_aposentadoria=int(idade_aposentadoria),
+        expectativa_vida=int(expectativa_vida),
+        renda_atual=renda_atual,
+        taxa_juros=taxa_juros / 100,
+        renda_desejada=renda_desejada,
+        aporte=None
+    )
+
+    for msg in erros:
+        st.error(msg)
+    for msg in alertas:
+        st.warning(msg)
+    for msg in informativos:
+        st.info(msg)
+
+    if erros:
+        st.stop()
+
     resultado = calcular_aporte(
         int(idade_atual), int(idade_aposentadoria), int(expectativa_vida),
         poupanca, renda_liquida, taxa_juros / 100,

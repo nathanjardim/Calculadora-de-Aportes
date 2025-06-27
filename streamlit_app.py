@@ -296,4 +296,13 @@ st.markdown("""
     </style>
     <div class="footer">
         <div class="footer-content">
-           
+            <span>
+                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
+                <strong>Email:</strong> ri@sow.capital
+                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
+                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
+            </span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)

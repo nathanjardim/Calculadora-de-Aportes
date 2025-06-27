@@ -127,7 +127,7 @@ renda_desejada_txt = st.text_input("Renda mensal desejada (R$)", value="15.000")
 renda_desejada = texto_para_numero(renda_desejada_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(renda_desejada)}")
 
-plano_saude_txt = st.text_input("Plano de saúde (R$)", value="0,00")
+plano_saude_txt = st.text_input("Plano de saúde (R$)", value="0")
 plano_saude = texto_para_numero(plano_saude_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(plano_saude)}")
 

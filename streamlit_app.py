@@ -108,13 +108,13 @@ st.title("Wealth Planning")
 selic_media, ipca_media, juros_real_medio = calcular_medias_historicas()
 
 st.markdown("### 📋 Dados Iniciais")
-renda_atual_txt = st.text_input("Renda atual (R$)", value="10.000,00")
+renda_atual_txt = st.text_input("Renda atual (R$)", value="10.000")
 renda_atual = texto_para_numero(renda_atual_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(renda_atual)}")
 
 idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
 
-poupanca_txt = st.text_input("Poupança atual (R$)", value="50.000,00")
+poupanca_txt = st.text_input("Poupança atual (R$)", value="50.000")
 poupanca = texto_para_numero(poupanca_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(poupanca)}")
 
@@ -123,7 +123,7 @@ st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.*
 taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
 
 st.markdown("### 🧾 Renda desejada na aposentadoria")
-renda_desejada_txt = st.text_input("Renda mensal desejada (R$)", value="15.000,00")
+renda_desejada_txt = st.text_input("Renda mensal desejada (R$)", value="15.000")
 renda_desejada = texto_para_numero(renda_desejada_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(renda_desejada)}")
 
@@ -131,16 +131,16 @@ plano_saude_txt = st.text_input("Plano de saúde (R$)", value="0,00")
 plano_saude = texto_para_numero(plano_saude_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(plano_saude)}")
 
-outras_despesas_txt = st.text_input("Outras despesas planejadas (R$)", value="0,00")
+outras_despesas_txt = st.text_input("Outras despesas planejadas (R$)", value="0")
 outras_despesas = texto_para_numero(outras_despesas_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(outras_despesas)}")
 
 st.markdown("### 💸 Renda passiva estimada")
-previdencia_txt = st.text_input("Renda com previdência (R$)", value="0,00")
+previdencia_txt = st.text_input("Renda com previdência (R$)", value="0")
 previdencia = texto_para_numero(previdencia_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(previdencia)}")
 
-aluguel_txt = st.text_input("Aluguel ou outras fontes de renda (R$)", value="0,00")
+aluguel_txt = st.text_input("Aluguel ou outras fontes de renda (R$)", value="0")
 aluguel_ou_outras = texto_para_numero(aluguel_txt)
 st.caption(f"➡️ Valor inserido: {formatar_moeda(aluguel_ou_outras)}")
 
@@ -152,7 +152,7 @@ st.markdown("### 🎯 Objetivo Final")
 modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
 outro_valor = None
 if modo == "atingir":
-    outro_valor_txt = st.text_input("Valor alvo (R$)", value="0,00")
+    outro_valor_txt = st.text_input("Valor alvo (R$)", value="0")
     outro_valor = texto_para_numero(outro_valor_txt)
     st.caption(f"➡️ Valor inserido: {formatar_moeda(outro_valor)}")
 

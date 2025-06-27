@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from core import calcular_aporte, simular_aposentadoria, ir_progressivo, ir_regressivo
 import altair as alt
 from io import BytesIO
+import locale
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 st.set_page_config(page_title="Wealth Planning", layout="wide")
 
@@ -25,6 +27,12 @@ st.markdown("""
 
 def formatar_moeda(valor, decimais=0):
     return f"R$ {valor:,.{decimais}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def texto_para_numero(texto):
+    try:
+        return float(texto.replace(".", "").replace(",", "."))
+    except:
+        return 0.0
 
 def buscar_serie_bcb(codigo, data_inicial, data_final):
     url = f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados?formato=json&dataInicial={data_inicial}&dataFinal={data_final}"
@@ -103,24 +111,24 @@ selic_media, ipca_media, juros_real_medio = calcular_medias_historicas()
 
 with st.form("formulario"):
     st.markdown("### 📋 Dados Iniciais")
-    renda_atual = st.number_input("Renda atual (R$)", min_value=0.0, step=100.0, value=10000.0, format="%.0f")
+    renda_atual = texto_para_numero(st.text_input("Renda atual (R$)", value="10.000,00"))
     idade_atual = st.number_input("Idade atual", min_value=18.0, max_value=100.0, value=30.0, format="%.0f")
-    poupanca = st.number_input("Poupança atual (R$)", min_value=0.0, step=1000.0, value=50000.0, format="%.0f")
+    poupanca = texto_para_numero(st.text_input("Poupança atual (R$)", value="50.000,00"))
 
     st.markdown("### 📊 Dados Econômicos")
     st.markdown(f"🔎 Juros real médio histórico: **{juros_real_medio:.2f}% a.a.**")
     taxa_juros = st.number_input("Rentabilidade real esperada (% a.a.)", min_value=0.0, max_value=100.0, value=juros_real_medio, format="%.2f")
 
     st.markdown("### 🧾 Renda desejada na aposentadoria")
-    renda_desejada = st.number_input("Renda mensal desejada (R$)", min_value=0.0, step=500.0, value=15000.0, format="%.0f")
-    plano_saude = st.number_input("Plano de saúde (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
-    outras_despesas = st.number_input("Outras despesas planejadas (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
+    renda_desejada = texto_para_numero(st.text_input("Renda mensal desejada (R$)", value="15.000,00"))
+    plano_saude = texto_para_numero(st.text_input("Plano de saúde (R$)", value="0,00"))
+    outras_despesas = texto_para_numero(st.text_input("Outras despesas planejadas (R$)", value="0,00"))
 
     st.markdown("### 💸 Renda passiva estimada")
-    previdencia = st.number_input("Renda com previdência (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
-    aluguel_ou_outras = st.number_input("Aluguel ou outras fontes de renda (R$)", min_value=0.0, step=100.0, value=0.0, format="%.0f")
+    previdencia = texto_para_numero(st.text_input("Renda com previdência (R$)", value="0,00"))
+    aluguel_ou_outras = texto_para_numero(st.text_input("Aluguel ou outras fontes de renda (R$)", value="0,00"))
 
-    st.markdown("### 🧓 Dados da aposentadoria")
+    st.markdown("### 🤿 Dados da aposentadoria")
     idade_aposentadoria = st.number_input("Idade para aposentadoria", min_value=0.0, max_value=100.0, value=65.0, format="%.0f")
     expectativa_vida = st.number_input("Expectativa de vida", min_value=idade_aposentadoria + 1, max_value=120.0, value=90.0, format="%.0f")
 
@@ -128,13 +136,17 @@ with st.form("formulario"):
     modo = st.selectbox("Objetivo com o patrimônio", ["manter", "zerar", "atingir"])
     outro_valor = None
     if modo == "atingir":
-        outro_valor = st.number_input("Valor alvo (R$)", min_value=0.0, step=10000.0, format="%.0f")
+        outro_valor = texto_para_numero(st.text_input("Valor alvo (R$)", value="0,00"))
 
     submitted = st.form_submit_button("📈 Calcular")
 
 if submitted:
     if idade_aposentadoria <= idade_atual:
         st.error("⚠️ A idade para aposentadoria deve ser maior do que a idade atual informada.")
+        st.stop()
+
+    if expectativa_vida <= idade_aposentadoria:
+        st.error("⚠️ A expectativa de vida deve ser maior do que a idade de aposentadoria.")
         st.stop()
 
     renda_passiva_total = previdencia + aluguel_ou_outras
@@ -182,7 +194,7 @@ if submitted:
     total_sacado = renda_liquida * meses_saque
     percentual_ir_efetivo = total_ir / total_sacado
 
-    st.info(f"🧾 Tributação otimizada: **Tabela {'Regressiva' if regime == 'regressivo' else 'Progressiva'}** | 📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
+    st.info(f"🧾 Tributção otimizada: **Tabela {'Regressiva' if regime == 'regressivo' else 'Progressiva'}** | 📉 Carga tributária média efetiva: **{percentual_ir_efetivo:.2%}**")
 
     percentual = int(aporte / dados["renda_atual"] * 100)
     patrimonio_final = int(patrimonio[(anos_aporte) * 12])
@@ -238,7 +250,7 @@ if submitted:
             worksheet.write("D3", anos_aporte)
             worksheet.write("E2", "📊 % da renda atual", bold)
             worksheet.write("E3", percentual / 100, percent_fmt)
-            worksheet.write("F2", "🧾 Tributação", bold)
+            worksheet.write("F2", "🧾 Tributção", bold)
             worksheet.write("F3", f"Tabela {regime.capitalize()}")
             worksheet.write("G2", "📉 Carga efetiva IR", bold)
             worksheet.write("G3", percentual_ir_efetivo, percent_fmt)
@@ -256,7 +268,7 @@ if submitted:
         return output
 
     st.download_button(
-        label="📥 Baixar Excel",
+        label="📅 Baixar Excel",
         data=gerar_excel(),
         file_name="simulacao_aposentadoria.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -284,13 +296,4 @@ st.markdown("""
     </style>
     <div class="footer">
         <div class="footer-content">
-            <span>
-                <strong>Rio de Janeiro</strong> – Av. Ataulfo de Paiva, 341, Sala 303 – Leblon, RJ – CEP: 22440-032
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Email:</strong> ri@sow.capital
-                &nbsp;&nbsp;<span style="color: white;">|</span>&nbsp;&nbsp;
-                <strong>Site:</strong> <a href="https://sow.capital/" target="_blank">https://sow.capital/</a>
-            </span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+           
